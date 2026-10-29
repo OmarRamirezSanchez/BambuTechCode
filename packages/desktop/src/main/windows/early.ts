@@ -11,7 +11,13 @@ import { platformFrame, storedBackgroundColor, storedZoomLevel, tone } from "./d
 import { registerRendererProtocol } from "./protocol"
 import { loadWindow } from "./scheme"
 import { allowRendererPermissions, wireNavigationPolicy, wireRendererHeaders } from "./security"
-import { manageWindowState, readWindowState, resolveWindowState, windowStateFile, type WindowState } from "./window-state"
+import {
+  manageWindowState,
+  readWindowState,
+  resolveWindowState,
+  windowStateFile,
+  type WindowState,
+} from "./window-state"
 
 export type EarlyWindow = {
   id: string
@@ -50,7 +56,7 @@ export function createEarlyWindow() {
     height: state.height,
     show: true,
     autoHideMenuBar: true,
-    title: "OpenCode",
+    title: "BambuTechCode",
     icon: path.join(icons, `icon.${process.platform === "win32" ? "ico" : "png"}`),
     backgroundColor: storedBackgroundColor(),
     ...platformFrame(tone(), zoom),

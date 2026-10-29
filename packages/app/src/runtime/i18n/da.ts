@@ -60,7 +60,7 @@ export const dict = {
   "settings.server.preferences.websearch.description": "Vælg den søgeudbyder, som agenter bruger til at søge på nettet",
   "settings.projects.search.placeholder": "Søg efter projekter",
   "project.settings.name.title": "Projektnavn",
-  "project.settings.name.description": "Navnet vist for dette projekt i hele OpenCode",
+  "project.settings.name.description": "Navnet vist for dette projekt i hele BambuTechCode",
   "project.settings.icon.description": "Anbefalet: 128×128px. Klik eller træk for at uploade et billede.",
   "project.settings.color.description":
     "Bruges til projektikonet, når der ikke er indstillet et brugerdefineret billede",
@@ -68,11 +68,12 @@ export const dict = {
   "project.settings.worktree.startup.hint.base": "Brug $OPENCODE_WORKTREE_BASE til basisarbejdsområdet.",
   "project.settings.worktree.startup.hint.new": "Brug $OPENCODE_WORKTREE_PATH til det nye arbejdsområde.",
   "project.settings.extensions.empty.mcps.title": "Ingen MCPs endnu",
-  "project.settings.extensions.empty.mcps.description": "MCPs tilgængelig for OpenCode vises her",
+  "project.settings.extensions.empty.mcps.description": "MCPs tilgængelig for BambuTechCode vises her",
   "project.settings.extensions.empty.plugins.title": "Ingen plugins endnu",
-  "project.settings.extensions.empty.plugins.description": "Plugins, der er tilgængelige for OpenCode, vises her",
+  "project.settings.extensions.empty.plugins.description": "Plugins, der er tilgængelige for BambuTechCode, vises her",
   "project.settings.extensions.empty.skills.title": "Ingen færdigheder endnu",
-  "project.settings.extensions.empty.skills.description": "De færdigheder, der er tilgængelige for OpenCode, vises her",
+  "project.settings.extensions.empty.skills.description":
+    "De færdigheder, der er tilgængelige for BambuTechCode, vises her",
   "project.settings.extensions.lsp.configured": "Konfigurerede sprogservere",
   "project.settings.extensions.lsp.status.enabled": "Aktiveret i config",
   "project.settings.extensions.lsp.status.disabled": "Deaktiveret i config",
@@ -92,7 +93,7 @@ export const dict = {
   "settings.timeline.collapsed.label": "{{activity}} kollapsede",
   "session.new.workspace.search.empty": "Ingen matchende arbejdsområder",
   "settings.workspaces.description": "Gennemgå arbejdsområder og administrer diskbrug",
-  "settings.workspaces.empty.description": "Arbejdstræer oprettet i OpenCode vises her",
+  "settings.workspaces.empty.description": "Arbejdstræer oprettet i BambuTechCode vises her",
   "settings.workspaces.sessions.filtered.one": "{{count}} session",
   "settings.workspaces.sessions.filtered.other": "{{count}} sessioner",
   "settings.workspaces.deleteAll.confirm.one": "Dette vil permanent slette {{count}} valgte arbejdsområde.",
@@ -142,8 +143,8 @@ export const dict = {
   "settings.about.otherContributor.other": "{{count}} andre",
   "settings.about.firstPublished": "Først udgivet i Missouri, USA",
   "settings.about.firstIllustrated": "Først illustreret i London, England",
-  "settings.about.website": "www.opencode.ai",
-  "settings.about.description": "OpenCode, open source-kodningsagenten",
+  "settings.about.website": "bambu-techservices.com",
+  "settings.about.description": "BambuTechCode, open source-kodningsagenten",
   "settings.about.trademark": "OpenCode er et registreret varemærke tilhørende Anomaly Innovations, Inc.",
   "settings.about.typeset": "Sat med Inter og IBM Plex Mono",
   "settings.about.tagline": "AI kan ikke bygge fantastisk software uden dig",
@@ -309,7 +310,6 @@ export const dict = {
   "provider.connect.toast.connected.title": "{{provider}} forbundet",
   "provider.connect.toast.connected.description": "Modeller fra {{provider}} er nu tilgængelige.",
 
-
   "provider.disconnect.toast.disconnected.title": "{{provider}} frakoblet",
   "provider.disconnect.toast.disconnected.description": "Modeller fra {{provider}} er ikke længere tilgængelige.",
   "model.tag.free": "Gratis",
@@ -369,7 +369,6 @@ export const dict = {
 
   "dialog.mcp.title": "MCP'er",
   "dialog.mcp.empty": "Ingen MCP'er konfigureret",
-
 
   "dialog.fork.empty": "Ingen beskeder at forgrene fra",
 
@@ -537,7 +536,7 @@ export const dict = {
   "settings.general.section.sounds": "Lydeffekter",
 
   "settings.general.row.language.title": "Sprog",
-  "settings.general.row.language.description": "Ændr visningssproget for OpenCode",
+  "settings.general.row.language.description": "Ændr visningssproget for BambuTechCode",
   "settings.general.row.shell.title": "Terminalshell",
   "settings.general.row.shell.description":
     "Vælg den shell, der bruges i din terminal. Kompatible shells bruges også til agentens værktøjskald.",
@@ -545,9 +544,9 @@ export const dict = {
   "settings.general.row.shell.terminalOnly": "kun terminal",
   "settings.general.row.colorScheme.title": "Farveskema",
   "settings.general.row.colorScheme.description":
-    "Vælg, om OpenCode skal følge systemtemaet eller bruge et lyst eller mørkt tema",
+    "Vælg, om BambuTechCode skal følge systemtemaet eller bruge et lyst eller mørkt tema",
   "settings.general.row.theme.title": "Tema",
-  "settings.general.row.theme.description": "Tilpas OpenCodes tema.",
+  "settings.general.row.theme.description": "Tilpas BambuTechCodes tema.",
   "settings.general.row.font.title": "Kode-skrifttype",
   "settings.general.row.font.description": "Tilpas skrifttypen, der bruges i kodeblokke",
   "settings.general.row.terminalFont.title": "Terminalskrifttype",
@@ -736,7 +735,7 @@ export const dict = {
   "error.childStore.persistedProjectMetadataCreateFailed": "Kunne ikke oprette vedvarende projektmetadata",
   "error.childStore.storeCreateFailed": "Kunne ikke oprette lager",
 
-  "desktop.menu.app": "OpenCode",
+  "desktop.menu.app": "BambuTechCode",
   "desktop.menu.file": "Arkiv",
   "desktop.menu.edit": "Rediger",
   "desktop.menu.view": "Oversigt",
@@ -775,19 +774,19 @@ export const dict = {
   "desktop.menu.nextProject": "Næste projekt",
   "desktop.menu.minimize": "Minimer",
   "desktop.menu.maximize": "Maksimer",
-  "desktop.menu.documentation": "OpenCode-dokumentation",
+  "desktop.menu.documentation": "BambuTechCode-dokumentation",
   "desktop.menu.supportForum": "Supportforum",
   "desktop.menu.shareFeedback": "Giv feedback",
   "desktop.menu.reportBug": "Rapportér en fejl",
-  "desktop.menu.ariaLabel": "OpenCode-menu",
+  "desktop.menu.ariaLabel": "BambuTechCode-menu",
 
   "desktop.recovery.action.relaunch": "Start igen",
   "desktop.recovery.action.exportLogs": "Eksportér logfiler",
   "desktop.recovery.action.keepWaiting": "Vent fortsat",
   "desktop.recovery.action.quit": "Afslut",
-  "desktop.recovery.loadFailed": "OpenCode kunne ikke indlæses",
-  "desktop.recovery.terminated": "OpenCode-vinduet blev uventet afsluttet",
-  "desktop.recovery.unresponsive": "OpenCode svarer ikke",
+  "desktop.recovery.loadFailed": "BambuTechCode kunne ikke indlæses",
+  "desktop.recovery.terminated": "BambuTechCode-vinduet blev uventet afsluttet",
+  "desktop.recovery.unresponsive": "BambuTechCode svarer ikke",
   "desktop.recovery.unresponsive.detail": "Du kan starte appen igen, åbne logfilerne eller fortsætte med at vente.",
   "desktop.recovery.loadFailed.detail": "Vindue: {{window}}\nURL: {{url}}\nFejl: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Vindue: {{window}}\nÅrsag: {{reason}}\nKode: {{code}}",

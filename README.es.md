@@ -1,114 +1,77 @@
 <p align="center">
-  <a href="https://opencode.ai">
-    <picture>
-      <source srcset="packages/console/app/src/asset/logo-ornate-dark.svg" media="(prefers-color-scheme: dark)">
-      <source srcset="packages/console/app/src/asset/logo-ornate-light.svg" media="(prefers-color-scheme: light)">
-      <img src="packages/console/app/src/asset/logo-ornate-light.svg" alt="OpenCode logo">
-    </picture>
-  </a>
-</p>
-<p align="center">El agente de programación con IA de código abierto.</p>
-<p align="center">
-  <a href="https://opencode.ai/discord"><img alt="Discord" src="https://img.shields.io/discord/1391832426048651334?style=flat-square&label=discord" /></a>
-  <a href="https://www.npmjs.com/package/@opencode/cli"><img alt="npm" src="https://img.shields.io/npm/v/@opencode/cli?style=flat-square" /></a>
-  <a href="https://github.com/anomalyco/opencode/actions/workflows/release.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/anomalyco/opencode/release.yml?style=flat-square&branch=dev" /></a>
+  <picture>
+    <source srcset="branding/bambu-logo-blanco.svg" media="(prefers-color-scheme: dark)">
+    <img src="branding/bambu-logo.svg" alt="BambuTechServices" width="240">
+  </picture>
 </p>
 
-<p align="center">
-  <a href="README.md">English</a> |
-  <a href="README.zh.md">简体中文</a> |
-  <a href="README.zht.md">繁體中文</a> |
-  <a href="README.ko.md">한국어</a> |
-  <a href="README.de.md">Deutsch</a> |
-  <a href="README.es.md">Español</a> |
-  <a href="README.fr.md">Français</a> |
-  <a href="README.it.md">Italiano</a> |
-  <a href="README.da.md">Dansk</a> |
-  <a href="README.ja.md">日本語</a> |
-  <a href="README.pl.md">Polski</a> |
-  <a href="README.ru.md">Русский</a> |
-  <a href="README.bs.md">Bosanski</a> |
-  <a href="README.ar.md">العربية</a> |
-  <a href="README.no.md">Norsk</a> |
-  <a href="README.br.md">Português (Brasil)</a> |
-  <a href="README.th.md">ไทย</a> |
-  <a href="README.tr.md">Türkçe</a> |
-  <a href="README.uk.md">Українська</a> |
-  <a href="README.bn.md">বাংলা</a> |
-  <a href="README.gr.md">Ελληνικά</a> |
-  <a href="README.vi.md">Tiếng Việt</a>
-</p>
+<h1 align="center">BambuTechCode</h1>
+<p align="center">El agente de desarrollo de BambuTechServices, basado en OpenCode.</p>
 
-[![OpenCode Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)
+Esta primera versión adapta la identidad visual de [OpenCode](https://github.com/anomalyco/opencode) a BambuTechServices. Conserva su motor, proveedores, herramientas, permisos, sesiones, API y plugins. La gobernanza de los procesos de desarrollo es la siguiente etapa; esta versión todavía no agrega reglas, aprobaciones ni controles de gobernanza.
 
----
+Es un fork independiente. No está desarrollado, patrocinado ni respaldado por Anomaly Innovations, Inc. Se conservan la licencia MIT y los créditos originales. OpenCode Console, OpenCode Go y otros proveedores externos mantienen su identidad y condiciones.
 
-### Instalación
+## Ejecutar localmente
+
+Requisito: **Bun 1.4.4**, la versión fijada por upstream.
 
 ```bash
-# YOLO
-curl -fsSL https://opencode.ai/v2/install | bash
-
-# Gestores de paquetes
-npm i -g @opencode/cli@latest      # o bun/pnpm/yarn
-brew install anomalyco/tap/opencode-v2 # macOS y Linux (recomendado, siempre al día)
-brew install opencode              # macOS y Linux (fórmula oficial de brew, se actualiza menos)
-sudo pacman -S opencode            # Arch Linux (Stable)
-paru -S opencode-beta              # Arch Linux (Latest from AUR)
-mise use -g opencode               # cualquier sistema
-nix run github:anomalyco/opencode  # Nix
+git clone https://github.com/OmarRamirezSanchez/BambuTechCode.git
+cd BambuTechCode
+bun install --frozen-lockfile
+bun run bambu
 ```
 
-> [!TIP]
-> Elimina versiones anteriores a 0.1.x antes de instalar.
-
-### App de escritorio (BETA)
-
-OpenCode también está disponible como aplicación de escritorio. Descárgala desde [opencode.ai/download](https://opencode.ai/download).
-
-| Plataforma            | Descarga                           |
-| --------------------- | ---------------------------------- |
-| macOS (Apple Silicon) | `opencode-desktop-mac-arm64.dmg`   |
-| macOS (Intel)         | `opencode-desktop-mac-x64.dmg`     |
-| Windows               | `opencode-desktop-win-x64.exe`     |
-| Linux                 | `.deb`, `.rpm`, o AppImage         |
+En macOS/Linux también puedes usar `./bambu`, que acepta los mismos argumentos que la CLI de OpenCode. Si existe `.tools/bun`, utiliza ese runtime local; de lo contrario utiliza Bun del PATH.
 
 ```bash
-# macOS (Homebrew)
-brew install --cask opencode-desktop
+./bambu --help
+./bambu /ruta/a/tu/proyecto
+./bambu auth login
 ```
 
-#### Directorio de instalación
+La conexión a modelos requiere las mismas credenciales o suscripciones que OpenCode. No se incluyen credenciales en el repositorio.
 
-El script de instalación instala OpenCode en `$HOME/.opencode/bin`.
+### Interfaz web
 
-### Agentes
+Ejecuta en dos terminales:
 
-OpenCode incluye dos agentes integrados que puedes alternar con la tecla `Tab`.
+```bash
+# Terminal 1, desde la raíz
+./bambu serve --hostname 127.0.0.1 --port 4096
 
-- **build** - Por defecto, agente con acceso completo para tareas de desarrollo
-- **plan** - Agente de solo lectura para análisis y exploración de código
-  - Deniega ediciones de archivos por defecto
-  - Pide permiso antes de ejecutar comandos bash
-  - Ideal para explorar codebases desconocidas o planificar cambios
+# Terminal 2, desde la raíz
+bun run dev:web -- --host 127.0.0.1 --port 4444
+```
 
-Además, incluye un subagente **general** para búsquedas complejas y tareas de varios pasos.
-Se usa internamente y se puede invocar con `@general` en los mensajes.
+Abre `http://localhost:4444`. El cliente usa el servidor local de OpenCode; puedes conectar proveedores y trabajar con los mismos proyectos y sesiones.
 
-Más información sobre [agentes](https://opencode.ai/v2/docs/agents).
+### Escritorio
 
-### Documentación
+```bash
+bun run dev:desktop
+```
 
-Para más información sobre cómo configurar OpenCode, [**ve a nuestra documentación**](https://opencode.ai/v2/docs).
+La aplicación Electron se llama **BambuTechCode Dev** y utiliza un identificador propio. Su interfaz y backend se ejecutan desde este código fuente. Para construir instaladores, consulta [las notas del fork](branding/README.md) y [la guía de escritorio de upstream](packages/desktop/README.md).
 
-### Contribuir
+## Compatibilidad
 
-Si te interesa contribuir a OpenCode, lee nuestras [docs de contribución](./CONTRIBUTING.md) antes de enviar un pull request.
+- Se mantienen `@opencode/*`, el comando técnico `opencode`, sus variables `OPENCODE_*`, formatos de configuración, protocolos y rutas de datos del motor.
+- Las configuraciones existentes, MCP, skills y plugins siguen usando sus nombres originales.
+- La CLI puede compartir configuración y datos con OpenCode según el canal. El nombre Bambu no implica aislamiento de sesiones del backend.
+- La interfaz utiliza el tema Bambu por defecto; los temas elegidos previamente por el usuario se respetan.
+- Las actualizaciones automáticas de escritorio están desactivadas hasta disponer de un canal de releases Bambu. La CLI también tiene desactivadas las actualizaciones automáticas; `upgrade` indica cómo actualizar desde el fork. Actualiza este fork desde Git y vuelve a instalar/compilar; el instalador oficial de OpenCode instala la distribución original.
 
-### Proyectos basados en OpenCode
+## Desarrollo y validación
 
-Si estás trabajando en un proyecto basado en OpenCode y usas "opencode" como parte del nombre, por ejemplo, "opencode-dashboard" u "opencode-mobile", agrega una nota en tu README para aclarar que no está hecho por el equipo de OpenCode y que no está afiliado con nosotros de ninguna manera.
+```bash
+bun run check
+cd packages/app && bun run build
+```
 
----
+Las pruebas se ejecutan desde cada paquete; no desde la raíz. Consulta [AGENTS.md](AGENTS.md), [CONTRIBUTING.md](CONTRIBUTING.md) y las instrucciones de cada paquete.
 
-**Únete a nuestra comunidad** [Discord](https://discord.gg/opencode) | [X.com](https://x.com/opencode)
+Base inicial: rama `dev` de OpenCode, commit `589c62db60a4ae25e845e440eef64dd007101dc9` (29 de octubre de 2026), versión del monorepo `2.2.0`.
+
+[Documentación original](README.upstream.md) · [Identidad y mantenimiento del fork](branding/README.md) · [Licencia MIT](LICENSE)

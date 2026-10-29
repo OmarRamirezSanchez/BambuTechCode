@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "opencode",
-  "description": "AI-powered development tool",
+  "description": "BambuTechCode — BambuTechServices edition of OpenCode",
   "version": "2.2.0",
   "private": true,
   "type": "module",
@@ -34,7 +34,8 @@
     "prepare": "husky",
     "random": "echo 'Random script'",
     "sso": "aws sso login --sso-session=opencode --no-browser",
-    "test": "echo 'do not run tests from root' && exit 1"
+    "test": "echo 'do not run tests from root' && exit 1",
+    "bambu": "bun run --cwd packages/cli src/index.ts"
   },
   "workspaces": {
     "packages": [
@@ -135,7 +136,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/anomalyco/opencode"
+    "url": "https://github.com/OmarRamirezSanchez/BambuTechCode"
   },
   "license": "MIT",
   "prettier": {

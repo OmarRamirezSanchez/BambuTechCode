@@ -1,13 +1,7 @@
 {
   "$schema": "https://opencode.ai/theme.json",
   "base": {
-    "categorical": [
-      "blue",
-      "purple",
-      "green",
-      "orange",
-      "red"
-    ],
+    "categorical": ["blue", "purple", "green", "orange", "red"],
     "text": {
       "base": "$hue.neutral.200",
       "muted": "$hue.neutral.400",
@@ -237,16 +231,20 @@
         "900": "#f6f3ff"
       },
       "accent": "$hue.orange",
-      "interactive": "$hue.blue",
+      "interactive": {
+        "100": "#195a10",
+        "200": "#237915",
+        "300": "#319b23",
+        "400": "#45bf33",
+        "500": "#52d93e",
+        "600": "#8ff07f",
+        "700": "#bef5b4",
+        "800": "#ddf9d7",
+        "900": "#eff9ec"
+      },
       "neutral": "$hue.gray"
     },
-    "categorical": [
-      "purple",
-      "orange",
-      "green",
-      "blue",
-      "red"
-    ],
+    "categorical": ["purple", "orange", "green", "blue", "red"],
     "text": {
       "action": {
         "primary": {
@@ -308,10 +306,10 @@
         "300": "#b5b5b5",
         "400": "#808080",
         "500": "#4c4c4c",
-        "600": "#1e1e1e",
-        "700": "#141414",
-        "800": "#0a0a0a",
-        "900": "#030303"
+        "600": "#141814",
+        "700": "#0d0f0d",
+        "800": "#070a07",
+        "900": "#020402"
       },
       "red": {
         "100": "#fd7e87",
@@ -380,7 +378,17 @@
         "900": "#17072b"
       },
       "accent": "$hue.purple",
-      "interactive": "$hue.orange",
+      "interactive": {
+        "100": "#8ff07f",
+        "200": "#52d93e",
+        "300": "#45bf33",
+        "400": "#319b23",
+        "500": "#237915",
+        "600": "#195a10",
+        "700": "#143c0e",
+        "800": "#10280c",
+        "900": "#091a06"
+      },
       "neutral": "$hue.gray"
     }
   }

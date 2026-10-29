@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+runtime=${BAMBU_BUN:-$root/.tools/bun}
+if [ ! -x "$runtime" ]; then
+  runtime=$(command -v bun || true)
+fi
+if [ -z "$runtime" ]; then
+  echo "BambuTechCode requires Bun 1.4.4. Install Bun, then run bun install --frozen-lockfile." >&2
+  exit 1
+fi
+
+export PATH="$(dirname -- "$runtime"):$PATH"
+export OPENCODE_DISABLE_AUTOUPDATE=1
+exec "$runtime" run --cwd "$root/packages/cli" src/index.ts "$@"

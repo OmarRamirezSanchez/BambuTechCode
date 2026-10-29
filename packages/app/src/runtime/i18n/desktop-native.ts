@@ -230,8 +230,8 @@ function locale(value: string) {
 const normalizeScript = (script?: string) => (script === "Aran" ? "Arab" : script)
 
 export const DESKTOP_NATIVE_ENGLISH = {
-  "desktop.microphoneUsage": "OpenCode uses your microphone for voice calls.",
-  "desktop.menu.app": "OpenCode",
+  "desktop.microphoneUsage": "BambuTechCode uses your microphone for voice calls.",
+  "desktop.menu.app": "BambuTechCode",
   "desktop.menu.file": "File",
   "desktop.menu.edit": "Edit",
   "desktop.menu.view": "View",
@@ -271,11 +271,11 @@ export const DESKTOP_NATIVE_ENGLISH = {
   "desktop.menu.nextProject": "Next Project",
   "desktop.menu.minimize": "Minimize",
   "desktop.menu.maximize": "Maximize",
-  "desktop.menu.documentation": "OpenCode Documentation",
+  "desktop.menu.documentation": "BambuTechCode Documentation",
   "desktop.menu.supportForum": "Support Forum",
   "desktop.menu.shareFeedback": "Share Feedback",
   "desktop.menu.reportBug": "Report a Bug",
-  "desktop.menu.ariaLabel": "OpenCode menu",
+  "desktop.menu.ariaLabel": "BambuTechCode menu",
 
   "desktop.cli.installed.title": "CLI Installed",
   "desktop.cli.installed.message": "CLI installed to {{path}}\n\nRestart your terminal to use the 'opencode' command.",
@@ -286,9 +286,9 @@ export const DESKTOP_NATIVE_ENGLISH = {
   "desktop.recovery.action.exportLogs": "Export Logs",
   "desktop.recovery.action.keepWaiting": "Keep Waiting",
   "desktop.recovery.action.quit": "Quit",
-  "desktop.recovery.loadFailed": "OpenCode failed to load",
-  "desktop.recovery.terminated": "OpenCode window terminated unexpectedly",
-  "desktop.recovery.unresponsive": "OpenCode is not responding",
+  "desktop.recovery.loadFailed": "BambuTechCode failed to load",
+  "desktop.recovery.terminated": "BambuTechCode window terminated unexpectedly",
+  "desktop.recovery.unresponsive": "BambuTechCode is not responding",
   "desktop.recovery.unresponsive.detail": "You can relaunch the app, open the logs, or keep waiting.",
   "desktop.recovery.loadFailed.detail": "Window: {{window}}\nURL: {{url}}\nError: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Window: {{window}}\nReason: {{reason}}\nCode: {{code}}",
@@ -310,6 +310,7 @@ export type DesktopNativeMessages = Record<DesktopNativeKey, string>
 
 export type DesktopNativeBundle = { locale: DesktopNativeLocale; messages: DesktopNativeMessages }
 
+// SAFETY: The static catalog owns all of its enumerable keys.
 export const DESKTOP_NATIVE_KEYS = Object.keys(DESKTOP_NATIVE_ENGLISH) as DesktopNativeKey[]
 
 export const DESKTOP_NATIVE_MAX_PAYLOAD_BYTES = 64 * 1024
@@ -320,11 +321,16 @@ export function createDesktopNativeBundle(
 ): DesktopNativeBundle {
   return {
     locale,
+    // SAFETY: Every required catalog key is emitted exactly once with a translated string.
     messages: Object.fromEntries(DESKTOP_NATIVE_KEYS.map((key) => [key, translate(key)])) as DesktopNativeMessages,
   }
 }
 
+// SAFETY: This function is the IPC decoding boundary; it checks locale, size, every key and every value.
+// eslint-disable-next-line anti-slop/no-unknown-parameters
 export function parseDesktopNativeBundle(value: unknown): DesktopNativeBundle | undefined {
+  // SAFETY: Reject non-object IPC input before reading its fields.
+  // eslint-disable-next-line anti-slop/no-runtime-typeof
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
 
   try {
@@ -333,20 +339,28 @@ export function parseDesktopNativeBundle(value: unknown): DesktopNativeBundle | 
     return undefined
   }
 
+  // SAFETY: The object guard above passed; both fields remain unknown until validated below.
   const bundle = value as { locale?: unknown; messages?: unknown }
 
   if (!DESKTOP_NATIVE_LOCALES.some((locale) => locale === bundle.locale)) return undefined
 
+  // SAFETY: The message dictionary must be an object before enumerating and validating every value.
+  // eslint-disable-next-line anti-slop/no-runtime-typeof
   if (!bundle.messages || typeof bundle.messages !== "object" || Array.isArray(bundle.messages)) return undefined
+  // SAFETY: The dictionary object was checked above; values remain unknown until the string check below.
+  // eslint-disable-next-line anti-slop/no-unsafe-dictionary-type
   const messages = bundle.messages as Record<string, unknown>
   const keys = Object.keys(messages)
 
   if (keys.length !== DESKTOP_NATIVE_KEYS.length) return undefined
 
+  // SAFETY: This is the boundary value check for each required translated message.
+  // eslint-disable-next-line anti-slop/no-runtime-typeof
   if (!DESKTOP_NATIVE_KEYS.every((key) => typeof messages[key] === "string")) return undefined
 
   if (!keys.every((key) => key in DESKTOP_NATIVE_ENGLISH)) return undefined
 
+  // SAFETY: Size, supported locale, exact catalog keys and all string values have now been checked.
   return bundle as DesktopNativeBundle
 }
 

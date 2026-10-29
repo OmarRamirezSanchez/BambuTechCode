@@ -1,5 +1,5 @@
 export const dict = {
-  "desktop.menu.app": "OpenCode",
+  "desktop.menu.app": "BambuTechCode",
   "desktop.menu.file": "Berkas",
   "desktop.menu.edit": "Sunting",
   "desktop.menu.view": "Tampilan",
@@ -38,19 +38,19 @@ export const dict = {
   "desktop.menu.nextProject": "Proyek berikutnya",
   "desktop.menu.minimize": "Minimalkan",
   "desktop.menu.maximize": "Maksimalkan",
-  "desktop.menu.documentation": "Dokumentasi OpenCode",
+  "desktop.menu.documentation": "Dokumentasi BambuTechCode",
   "desktop.menu.supportForum": "Forum dukungan",
   "desktop.menu.shareFeedback": "Bagikan umpan balik",
   "desktop.menu.reportBug": "Laporkan bug",
-  "desktop.menu.ariaLabel": "Menu OpenCode",
+  "desktop.menu.ariaLabel": "Menu BambuTechCode",
 
   "desktop.recovery.action.relaunch": "Luncurkan ulang",
   "desktop.recovery.action.exportLogs": "Ekspor log",
   "desktop.recovery.action.keepWaiting": "Tetap tunggu",
   "desktop.recovery.action.quit": "Keluar",
-  "desktop.recovery.loadFailed": "OpenCode gagal dimuat",
-  "desktop.recovery.terminated": "Jendela OpenCode berhenti secara tidak terduga",
-  "desktop.recovery.unresponsive": "OpenCode tidak merespons",
+  "desktop.recovery.loadFailed": "BambuTechCode gagal dimuat",
+  "desktop.recovery.terminated": "Jendela BambuTechCode berhenti secara tidak terduga",
+  "desktop.recovery.unresponsive": "BambuTechCode tidak merespons",
   "desktop.recovery.unresponsive.detail": "Anda dapat meluncurkan ulang aplikasi, membuka log, atau tetap menunggu.",
   "desktop.recovery.loadFailed.detail": "Jendela: {{window}}\nURL: {{url}}\nKesalahan: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Jendela: {{window}}\nAlasan: {{reason}}\nKode: {{code}}",
@@ -60,7 +60,6 @@ export const dict = {
   "desktop.dialog.chooseFile": "Pilih berkas",
   "desktop.dialog.saveFile": "Simpan berkas",
   "desktop.dialog.files": "Berkas",
-
 
   "desktop.picker.error.notSelected": "Berkas tidak dipilih melalui pemilih",
   "desktop.picker.error.sizeLimit": "Lampiran yang dipilih melebihi batas {{limit}} MB",
@@ -182,7 +181,6 @@ export const dict = {
   "provider.connect.toast.connected.title": "{{provider}} terhubung",
   "provider.connect.toast.connected.description": "Model {{provider}} sekarang tersedia untuk digunakan.",
 
-
   "provider.disconnect.toast.disconnected.title": "{{provider}} terputus",
   "provider.disconnect.toast.disconnected.description": "Model {{provider}} tidak lagi tersedia.",
   "provider.disconnect.toast.noCredentials.description":
@@ -250,7 +248,6 @@ export const dict = {
 
   "dialog.mcp.title": "MCP",
   "dialog.mcp.empty": "Tidak ada MCP yang dikonfigurasi",
-
 
   "dialog.fork.empty": "Tidak ada pesan yang dapat dicabangkan",
 
@@ -486,15 +483,16 @@ export const dict = {
   "settings.general.section.sounds": "Efek suara",
 
   "settings.general.row.language.title": "Bahasa",
-  "settings.general.row.language.description": "Ubah bahasa tampilan untuk OpenCode",
+  "settings.general.row.language.description": "Ubah bahasa tampilan untuk BambuTechCode",
   "settings.general.row.shell.title": "Shell terminal",
   "settings.general.row.shell.description": "Shell yang digunakan oleh terminal dan alat agen",
   "settings.general.row.shell.autoDefault": "Otomatis (Bawaan)",
   "settings.general.row.shell.terminalOnly": "hanya terminal",
   "settings.general.row.colorScheme.title": "Skema warna",
-  "settings.general.row.colorScheme.description": "Pilih apakah OpenCode mengikuti tema sistem, terang, atau gelap",
+  "settings.general.row.colorScheme.description":
+    "Pilih apakah BambuTechCode mengikuti tema sistem, terang, atau gelap",
   "settings.general.row.theme.title": "Tema",
-  "settings.general.row.theme.description": "Sesuaikan tema OpenCode.",
+  "settings.general.row.theme.description": "Sesuaikan tema BambuTechCode.",
   "settings.general.row.font.title": "Font kode",
   "settings.general.row.font.description": "Sesuaikan font yang digunakan di blok kode",
   "settings.general.row.terminalFont.title": "Font terminal",
@@ -745,8 +743,8 @@ export const dict = {
   "settings.about.otherContributor.other": "{{count}} lainnya",
   "settings.about.firstPublished": "Pertama kali diterbitkan di Missouri, AS",
   "settings.about.firstIllustrated": "Pertama kali diilustrasikan di London, Inggris",
-  "settings.about.website": "www.opencode.ai",
-  "settings.about.description": "OpenCode, agen pengkodean sumber terbuka",
+  "settings.about.website": "bambu-techservices.com",
+  "settings.about.description": "BambuTechCode, agen pengkodean sumber terbuka",
   "settings.about.trademark": "OpenCode adalah merek dagang terdaftar dari Anomaly Innovations, Inc.",
   "settings.about.typeset": "Pengesetan di Inter dan IBM Plex Mono",
   "settings.about.tagline": "AI tidak dapat membuat perangkat lunak yang hebat tanpa Anda",
@@ -838,18 +836,20 @@ export const dict = {
     "Pilih penyedia pencarian yang digunakan agen untuk mencari di web",
   "settings.projects.search.placeholder": "Cari proyek",
   "project.settings.name.title": "Nama proyek",
-  "project.settings.name.description": "Nama yang ditampilkan untuk proyek ini di seluruh OpenCode",
+  "project.settings.name.description": "Nama yang ditampilkan untuk proyek ini di seluruh BambuTechCode",
   "project.settings.icon.description": "Disarankan: 128×128px. Klik atau seret untuk mengunggah gambar.",
   "project.settings.color.description": "Digunakan untuk ikon proyek saat tidak ada gambar khusus yang disetel",
   "project.settings.worktree.startup.description": "Dijalankan sekali setelah membuat worktree baru",
   "project.settings.worktree.startup.hint.base": "Gunakan $OPENCODE_WORKTREE_BASE untuk worktree dasar.",
   "project.settings.worktree.startup.hint.new": "Gunakan $OPENCODE_WORKTREE_PATH untuk worktree baru.",
   "project.settings.extensions.empty.mcps.title": "Belum ada MCP",
-  "project.settings.extensions.empty.mcps.description": "MCP yang tersedia untuk OpenCode akan muncul di sini",
+  "project.settings.extensions.empty.mcps.description": "MCP yang tersedia untuk BambuTechCode akan muncul di sini",
   "project.settings.extensions.empty.plugins.title": "Belum ada plugin",
-  "project.settings.extensions.empty.plugins.description": "Plugin yang tersedia untuk OpenCode akan muncul di sini",
+  "project.settings.extensions.empty.plugins.description":
+    "Plugin yang tersedia untuk BambuTechCode akan muncul di sini",
   "project.settings.extensions.empty.skills.title": "Belum ada keahlian",
-  "project.settings.extensions.empty.skills.description": "Keahlian yang tersedia untuk OpenCode akan muncul di sini",
+  "project.settings.extensions.empty.skills.description":
+    "Keahlian yang tersedia untuk BambuTechCode akan muncul di sini",
   "project.settings.extensions.lsp.configured": "Server bahasa yang dikonfigurasi",
   "project.settings.extensions.lsp.status.enabled": "Diaktifkan dalam konfigurasi",
   "project.settings.extensions.lsp.status.disabled": "Dinonaktifkan dalam konfigurasi",
@@ -870,7 +870,7 @@ export const dict = {
   "settings.timeline.collapsed.label": "{{activity}} diciutkan",
   "session.new.workspace.search.empty": "Tidak ada worktree yang cocok",
   "settings.workspaces.description": "Tinjau worktree dan kelola penggunaan disk",
-  "settings.workspaces.empty.description": "Worktree yang dibuat di OpenCode akan muncul di sini",
+  "settings.workspaces.empty.description": "Worktree yang dibuat di BambuTechCode akan muncul di sini",
   "settings.workspaces.sessions.filtered.one": "{{count}} sesi",
   "settings.workspaces.sessions.filtered.other": "{{count}} sesi",
   "settings.workspaces.deleteAll.confirm.one": "Ini akan menghapus secara permanen {{count}} worktree yang dipilih.",

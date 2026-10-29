@@ -1,5 +1,5 @@
 export const dict = {
-  "desktop.menu.app": "OpenCode",
+  "desktop.menu.app": "BambuTechCode",
   "desktop.menu.file": "Файл",
   "desktop.menu.edit": "Правка",
   "desktop.menu.view": "Вид",
@@ -38,19 +38,19 @@ export const dict = {
   "desktop.menu.nextProject": "Следующий проект",
   "desktop.menu.minimize": "Свернуть",
   "desktop.menu.maximize": "Развернуть",
-  "desktop.menu.documentation": "Документация OpenCode",
+  "desktop.menu.documentation": "Документация BambuTechCode",
   "desktop.menu.supportForum": "Форум поддержки",
   "desktop.menu.shareFeedback": "Отправить отзыв",
   "desktop.menu.reportBug": "Сообщить об ошибке",
-  "desktop.menu.ariaLabel": "Меню OpenCode",
+  "desktop.menu.ariaLabel": "Меню BambuTechCode",
 
   "desktop.recovery.action.relaunch": "Запустить снова",
   "desktop.recovery.action.exportLogs": "Экспортировать журналы",
   "desktop.recovery.action.keepWaiting": "Продолжить ожидание",
   "desktop.recovery.action.quit": "Выйти",
-  "desktop.recovery.loadFailed": "Не удалось загрузить OpenCode",
-  "desktop.recovery.terminated": "Окно OpenCode неожиданно завершило работу",
-  "desktop.recovery.unresponsive": "OpenCode не отвечает",
+  "desktop.recovery.loadFailed": "Не удалось загрузить BambuTechCode",
+  "desktop.recovery.terminated": "Окно BambuTechCode неожиданно завершило работу",
+  "desktop.recovery.unresponsive": "BambuTechCode не отвечает",
   "desktop.recovery.unresponsive.detail": "Можно снова запустить приложение, открыть журналы или продолжить ожидание.",
   "desktop.recovery.loadFailed.detail": "Окно: {{window}}\nURL: {{url}}\nОшибка: {{code}} {{description}}",
   "desktop.recovery.terminated.detail": "Окно: {{window}}\nПричина: {{reason}}\nКод: {{code}}",
@@ -178,7 +178,6 @@ export const dict = {
   "provider.connect.toast.connected.title": "{{provider}} подключён",
   "provider.connect.toast.connected.description": "Модели {{provider}} теперь доступны.",
 
-
   "provider.disconnect.toast.disconnected.title": "{{provider}} отключён",
   "provider.disconnect.toast.disconnected.description": "Модели {{provider}} больше недоступны.",
   "model.tag.free": "Бесплатно",
@@ -238,7 +237,6 @@ export const dict = {
 
   "dialog.mcp.title": "MCP",
   "dialog.mcp.empty": "MCP не настроены",
-
 
   "dialog.fork.empty": "Нет сообщений для ответвления",
 
@@ -410,16 +408,17 @@ export const dict = {
   "settings.general.section.sounds": "Звуковые эффекты",
 
   "settings.general.row.language.title": "Язык",
-  "settings.general.row.language.description": "Изменить язык отображения OpenCode",
+  "settings.general.row.language.description": "Изменить язык отображения BambuTechCode",
   "settings.general.row.shell.title": "Оболочка терминала",
   "settings.general.row.shell.description":
     "Выберите оболочку для терминала. Совместимые оболочки также используются агентом при вызове инструментов.",
   "settings.general.row.shell.autoDefault": "Авто (по умолчанию)",
   "settings.general.row.shell.terminalOnly": "только терминал",
   "settings.general.row.colorScheme.title": "Цветовая схема",
-  "settings.general.row.colorScheme.description": "Выберите, следует ли OpenCode системной, светлой или тёмной теме",
+  "settings.general.row.colorScheme.description":
+    "Выберите, следует ли BambuTechCode системной, светлой или тёмной теме",
   "settings.general.row.theme.title": "Тема",
-  "settings.general.row.theme.description": "Настройте оформление OpenCode.",
+  "settings.general.row.theme.description": "Настройте оформление BambuTechCode.",
   "settings.general.row.font.title": "Шрифт кода",
   "settings.general.row.font.description": "Настройте шрифт, используемый в блоках кода",
   "settings.general.row.terminalFont.title": "Шрифт терминала",
@@ -750,8 +749,8 @@ export const dict = {
   "settings.about.otherContributor.other": "{{count}} другого",
   "settings.about.firstPublished": "Впервые опубликовано в Миссури, США.",
   "settings.about.firstIllustrated": "Впервые показано в Лондоне, Англия.",
-  "settings.about.website": "www.opencode.ai",
-  "settings.about.description": "OpenCode, агент кодирования с открытым исходным кодом.",
+  "settings.about.website": "bambu-techservices.com",
+  "settings.about.description": "BambuTechCode, агент кодирования с открытым исходным кодом.",
   "settings.about.trademark": "OpenCode является зарегистрированной торговой маркой Anomaly Innovations, Inc..",
   "settings.about.typeset": "Набор в Inter и IBM Plex Mono",
   "settings.about.tagline": "AI не сможет создать отличное программное обеспечение без вас",
@@ -851,7 +850,7 @@ export const dict = {
     "Выберите провайдера поиска, которым агенты будут пользоваться для поиска в сети",
   "settings.projects.search.placeholder": "Проекты поиска",
   "project.settings.name.title": "Название проекта",
-  "project.settings.name.description": "Имя, отображаемое для этого проекта во всей системе OpenCode",
+  "project.settings.name.description": "Имя, отображаемое для этого проекта во всей системе BambuTechCode",
   "project.settings.icon.description":
     "Рекомендуется: 128×128 пикселей. Нажмите или перетащите для загрузки изображения.",
   "project.settings.color.description": "Используется для иконки проекта, когда не задано пользовательское изображение",
@@ -859,11 +858,13 @@ export const dict = {
   "project.settings.worktree.startup.hint.base": "Используйте $OPENCODE_WORKTREE_BASE для базового рабочего дерева.",
   "project.settings.worktree.startup.hint.new": "Используйте $OPENCODE_WORKTREE_PATH для нового рабочего дерева.",
   "project.settings.extensions.empty.mcps.title": "Еще нет MCP",
-  "project.settings.extensions.empty.mcps.description": "MCP, доступные для OpenCode, будут отображаться здесь",
+  "project.settings.extensions.empty.mcps.description": "MCP, доступные для BambuTechCode, будут отображаться здесь",
   "project.settings.extensions.empty.plugins.title": "Еще нет плагинов",
-  "project.settings.extensions.empty.plugins.description": "Плагины, доступные для OpenCode, будут отображаться здесь",
+  "project.settings.extensions.empty.plugins.description":
+    "Плагины, доступные для BambuTechCode, будут отображаться здесь",
   "project.settings.extensions.empty.skills.title": "Еще нет навыков",
-  "project.settings.extensions.empty.skills.description": "Навыки, доступные для OpenCode, будут отображаться здесь",
+  "project.settings.extensions.empty.skills.description":
+    "Навыки, доступные для BambuTechCode, будут отображаться здесь",
   "project.settings.extensions.lsp.configured": "Настроенные языковые серверы",
   "project.settings.extensions.lsp.status.enabled": "Включено в настройках",
   "project.settings.extensions.lsp.status.disabled": "Отключено в настройках",
@@ -883,7 +884,7 @@ export const dict = {
   "settings.timeline.collapsed.label": "{{activity}} свернуто",
   "session.new.workspace.search.empty": "Совпадающих рабочих деревьев нет",
   "settings.workspaces.description": "Просмотрите рабочие деревья и управляйте использованием диска",
-  "settings.workspaces.empty.description": "Рабочие деревья, созданные в OpenCode, появятся здесь",
+  "settings.workspaces.empty.description": "Рабочие деревья, созданные в BambuTechCode, появятся здесь",
   "settings.workspaces.sessions.filtered.one": "{{count}} сессия",
   "settings.workspaces.sessions.filtered.other": "{{count}} сессии",
   "settings.workspaces.deleteAll.confirm.one": "Это навсегда удалит {{count}} выбранное рабочее дерево.",

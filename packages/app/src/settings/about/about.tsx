@@ -6,7 +6,7 @@ import { ExternalLink } from "@/runtime/platform/external-link"
 import { showToast } from "@/shell/notifications/toast"
 import legal from "./legal.svg"
 import anomalyBrush from "./anomaly-brush.svg"
-import { AnimatedWordmark } from "./animated-wordmark"
+import { Logo } from "@opencode/ui/logo"
 import { FALLBACK_OTHER_CONTRIBUTORS, loadOtherContributorCount } from "./contributors"
 
 const writers = [
@@ -80,7 +80,9 @@ export function SettingsAbout(props: { active: boolean }) {
         <p>{language.t("settings.about.license")}</p>
       </div>
 
-      <AnimatedWordmark active={props.active} />
+      <div class="flex justify-center py-8">
+        <Logo class="w-64 max-w-full" />
+      </div>
 
       <div class="settings-about-credits">
         <p>{language.rich("settings.about.writtenByNames", { names: language.list(writerCredits()) })}</p>
@@ -97,13 +99,14 @@ export function SettingsAbout(props: { active: boolean }) {
       </div>
 
       <p class="settings-about-faint">
-        <ExternalLink href="https://opencode.ai">
+        <ExternalLink href="https://bambu-techservices.com">
           <bdi dir="ltr">{language.t("settings.about.website")}</bdi>
         </ExternalLink>
       </p>
 
       <div class="settings-about-details">
         <p>{language.t("settings.about.description")}</p>
+        <p>{language.t("settings.about.fork")}</p>
         <p>{language.t("settings.about.trademark")}</p>
         <p>{language.t("settings.about.typeset")}</p>
         <p>

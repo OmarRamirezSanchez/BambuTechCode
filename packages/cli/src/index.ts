@@ -19,6 +19,9 @@ import { Heap } from "./heap"
 import { CpuProfile } from "./cpu-profile"
 import { ShutdownDeadline } from "./shutdown-deadline"
 
+// Bambu distributions update from this fork until a dedicated release feed is available.
+process.env.OPENCODE_DISABLE_AUTOUPDATE = "1"
+
 ensurePluginRuntime()
 
 if (process.env.OPENCODE_SSH_ASKPASS_PORT) {

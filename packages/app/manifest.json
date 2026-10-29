@@ -1,6 +1,6 @@
 {
-  "name": "OpenCode",
-  "short_name": "OpenCode",
+  "name": "BambuTechCode",
+  "short_name": "BambuCode",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -30,7 +30,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#080808",
-  "background_color": "#080808",
+  "theme_color": "#020402",
+  "background_color": "#020402",
   "display": "standalone"
 }

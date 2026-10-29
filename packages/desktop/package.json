@@ -4,10 +4,9 @@
   "version": "2.2.0",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://opencode.ai",
+  "homepage": "https://bambu-techservices.com",
   "author": {
-    "name": "OpenCode",
-    "email": "hello@opencode.ai"
+    "name": "BambuTechServices"
   },
   "scripts": {
     "typecheck": "bun check --no-script -b",

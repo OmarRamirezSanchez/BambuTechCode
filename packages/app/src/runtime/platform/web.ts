@@ -1,3 +1,4 @@
+import { BAMBU_ICON } from "@opencode/ui/brand"
 import { createBrowserDraftStore } from "@/runtime/persistence/drafts"
 import type { Platform } from "./platform"
 
@@ -28,7 +29,7 @@ export function createWebPlatform(version: string) {
 
       const notification = new Notification(title, {
         body: description ?? "",
-        icon: "https://opencode.ai/favicon-96x96-v3.png",
+        icon: BAMBU_ICON,
       })
 
       notification.onclick = () => {

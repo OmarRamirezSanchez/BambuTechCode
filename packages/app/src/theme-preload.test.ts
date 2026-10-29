@@ -6,6 +6,7 @@ const run = () => Function(src)()
 
 const setSystemDark = (matches: boolean) =>
   Object.defineProperty(window, "matchMedia", {
+    // SAFETY: The preload only reads matches; this fixture exercises precisely that browser contract.
     value: () => ({ matches }) as MediaQueryList,
     configurable: true,
   })
@@ -33,7 +34,7 @@ describe("theme preload", () => {
       if (stored) localStorage.setItem("opencode-color-scheme", stored)
       run()
 
-      expect(document.documentElement.dataset.theme).toBe("oc-2")
+      expect(document.documentElement.dataset.theme).toBe("bambu")
       expect(document.documentElement.dataset.colorScheme).toBe(scheme)
       expect(document.documentElement.style.backgroundColor).toBe(background)
     },

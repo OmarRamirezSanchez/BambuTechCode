@@ -4,6 +4,7 @@ import { createEffect, onMount } from "solid-js"
 import { createStore } from "solid-js/store"
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { createSimpleContext } from "../context/helper"
+import bambuThemeJson from "./themes/bambu.json"
 import oc2ThemeJson from "./themes/oc-2.json"
 import { resolveThemeVariant, themeToCss } from "./resolve"
 import { resolveThemeVariantV2, themeV2ToCss } from "./v2/resolve"
@@ -49,55 +50,75 @@ function knownThemes() {
   return known
 }
 
-const names: Record<string, string> = {
-  "oc-2": "OpenCode",
-  amoled: "AMOLED",
-  aura: "Aura",
-  ayu: "Ayu",
-  carbonfox: "Carbonfox",
-  catppuccin: "Catppuccin",
-  "catppuccin-frappe": "Catppuccin Frappe",
-  "catppuccin-macchiato": "Catppuccin Macchiato",
-  cobalt2: "Cobalt2",
-  cursor: "Cursor",
-  dracula: "Dracula",
-  everforest: "Everforest",
-  flexoki: "Flexoki",
-  github: "GitHub",
-  gruvbox: "Gruvbox",
-  kanagawa: "Kanagawa",
-  "lucent-orng": "Lucent Orng",
-  material: "Material",
-  matrix: "Matrix",
-  mercury: "Mercury",
-  monokai: "Monokai",
-  nightowl: "Night Owl",
-  nord: "Nord",
-  "one-dark": "One Dark",
-  onedarkpro: "One Dark Pro",
-  orng: "Orng",
-  "osaka-jade": "Osaka Jade",
-  palenight: "Palenight",
-  rosepine: "Rose Pine",
-  shadesofpurple: "Shades of Purple",
-  solarized: "Solarized",
-  synthwave84: "Synthwave '84",
-  tokyonight: "Tokyonight",
-  vercel: "Vercel",
-  vesper: "Vesper",
-  zenburn: "Zenburn",
+const names = new Map<string, string>(
+  Object.entries({
+    bambu: "BambuTechServices",
+    "oc-2": "OpenCode",
+    amoled: "AMOLED",
+    aura: "Aura",
+    ayu: "Ayu",
+    carbonfox: "Carbonfox",
+    catppuccin: "Catppuccin",
+    "catppuccin-frappe": "Catppuccin Frappe",
+    "catppuccin-macchiato": "Catppuccin Macchiato",
+    cobalt2: "Cobalt2",
+    cursor: "Cursor",
+    dracula: "Dracula",
+    everforest: "Everforest",
+    flexoki: "Flexoki",
+    github: "GitHub",
+    gruvbox: "Gruvbox",
+    kanagawa: "Kanagawa",
+    "lucent-orng": "Lucent Orng",
+    material: "Material",
+    matrix: "Matrix",
+    mercury: "Mercury",
+    monokai: "Monokai",
+    nightowl: "Night Owl",
+    nord: "Nord",
+    "one-dark": "One Dark",
+    onedarkpro: "One Dark Pro",
+    orng: "Orng",
+    "osaka-jade": "Osaka Jade",
+    palenight: "Palenight",
+    rosepine: "Rose Pine",
+    shadesofpurple: "Shades of Purple",
+    solarized: "Solarized",
+    synthwave84: "Synthwave '84",
+    tokyonight: "Tokyonight",
+    vercel: "Vercel",
+    vesper: "Vesper",
+    zenburn: "Zenburn",
+  }),
+)
+
+// SAFETY: Bundled JSON themes use the checked-in DesktopTheme schema; JSON imports widen hex strings.
+const oc2Theme = oc2ThemeJson as DesktopTheme
+
+// SAFETY: Bambu preserves the same palette and token schema as the bundled oc-2 theme.
+const bambuTheme = bambuThemeJson as DesktopTheme
+
+type ThemeState = {
+  themes: Record<string, DesktopTheme>
+  themeId: string
+  colorScheme: ColorScheme
+  mode: "light" | "dark"
+  previewThemeId: string | null
+  previewScheme: ColorScheme | null
 }
 
-const oc2Theme = oc2ThemeJson as DesktopTheme
+function storedScheme(value: string | null): ColorScheme {
+  return value === "light" || value === "dark" ? value : "system"
+}
 
 function resolveStoredTheme(id: string | null | undefined, registered?: Record<string, DesktopTheme>) {
   if (id === "oc-2" || (id && (knownThemes().has(id) || registered?.[id]))) return id
 
-  return "oc-2"
+  return "bambu"
 }
 
 function read(key: string) {
-  if (typeof localStorage !== "object") return null
+  if (typeof localStorage === "undefined") return null
 
   try {
     return localStorage.getItem(key)
@@ -107,7 +128,7 @@ function read(key: string) {
 }
 
 function write(key: string, value: string) {
-  if (typeof localStorage !== "object") return
+  if (typeof localStorage === "undefined") return
 
   try {
     localStorage.setItem(key, value)
@@ -115,7 +136,7 @@ function write(key: string, value: string) {
 }
 
 function drop(key: string) {
-  if (typeof localStorage !== "object") return
+  if (typeof localStorage === "undefined") return
 
   try {
     localStorage.removeItem(key)
@@ -128,7 +149,7 @@ function clear() {
 }
 
 function ensureThemeStyleElement(): HTMLStyleElement {
-  const existing = document.getElementById(THEME_STYLE_ID) as HTMLStyleElement | null
+  const existing = document.querySelector<HTMLStyleElement>(`style#${THEME_STYLE_ID}`)
 
   if (existing) return existing
   const element = document.createElement("style")
@@ -139,7 +160,7 @@ function ensureThemeStyleElement(): HTMLStyleElement {
 }
 
 function getSystemMode(): "light" | "dark" {
-  if (typeof window !== "object") return "light"
+  if (typeof window === "undefined") return "light"
 
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
 }
@@ -201,18 +222,19 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
       clear()
     }
 
-    const colorScheme = (read(STORAGE_KEYS.COLOR_SCHEME) as ColorScheme | null) ?? "system"
+    const colorScheme = storedScheme(read(STORAGE_KEYS.COLOR_SCHEME))
     const mode = colorScheme === "system" ? getSystemMode() : colorScheme
 
-    const [store, setStore] = createStore({
+    const [store, setStore] = createStore<ThemeState>({
       themes: {
         "oc-2": oc2Theme,
-      } as Record<string, DesktopTheme>,
+        bambu: bambuTheme,
+      },
       themeId,
       colorScheme,
       mode,
-      previewThemeId: null as string | null,
-      previewScheme: null as ColorScheme | null,
+      previewThemeId: null,
+      previewScheme: null,
     })
 
     const loads = new Map<string, Promise<DesktopTheme | undefined>>()
@@ -290,8 +312,9 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
       }
 
       if (e.key === STORAGE_KEYS.COLOR_SCHEME && e.newValue) {
-        setStore("colorScheme", e.newValue as ColorScheme)
-        setStore("mode", e.newValue === "system" ? getSystemMode() : (e.newValue as "light" | "dark"))
+        const scheme = storedScheme(e.newValue)
+        setStore("colorScheme", scheme)
+        setStore("mode", scheme === "system" ? getSystemMode() : scheme)
       }
     }
 
@@ -309,7 +332,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
 
       const rawTheme = read(STORAGE_KEYS.THEME_ID) ?? props.defaultTheme
       const savedTheme = resolveStoredTheme(rawTheme, store.themes)
-      const savedScheme = (read(STORAGE_KEYS.COLOR_SCHEME) as ColorScheme | null) ?? "system"
+      const savedScheme = storedScheme(read(STORAGE_KEYS.COLOR_SCHEME))
 
       if (rawTheme && rawTheme !== savedTheme) {
         write(STORAGE_KEYS.THEME_ID, savedTheme)
@@ -375,7 +398,7 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
       colorScheme: () => store.colorScheme,
       mode: () => store.mode,
       ids,
-      name: (id: string) => store.themes[id]?.name ?? names[id] ?? id,
+      name: (id: string) => store.themes[id]?.name ?? names.get(id) ?? id,
       loadThemes,
       themes: () => store.themes,
       setTheme,

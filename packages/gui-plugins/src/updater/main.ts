@@ -10,7 +10,8 @@ const setup: Plugin.MainSetup = async (ctx) => {
   const builtin = builtinMainContext(ctx)
   const build = ctx.app
   const lifecycle = builtin.lifecycle
-  const enabled = build.packaged
+  // Bambu distributions update from reviewed source until a dedicated release feed exists.
+  const enabled = false
   // Holds no resources, so it needs no cleanup.
   const context = logContext(ctx.log.write)
   const runPromise = Effect.runPromiseWith(context)
