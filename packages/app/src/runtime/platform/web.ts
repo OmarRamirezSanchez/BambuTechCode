@@ -47,6 +47,7 @@ export function createWebPlatform(version: string) {
 }
 
 function getCurrentServerUrl() {
+  if (import.meta.env.VITE_RAD_GOVERNANCE === "true") return location.origin
   if (import.meta.env.VITE_OPENCODE_SERVER_MODE === "none") return undefined
 
   if (import.meta.env.DEV) {

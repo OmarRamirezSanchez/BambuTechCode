@@ -21,6 +21,7 @@ import { TabsProvider } from "@/shell/tabs/tabs"
 import { ErrorPage } from "@/shell/errors/error"
 import { AppRoutes, File, preloadRoute } from "@/shell/routes/routes"
 import { PluginRoot } from "@/runtime/plugin/root"
+import { RadAccount } from "@/rad-account"
 
 export { preloadRoute }
 
@@ -102,6 +103,7 @@ export function AppInterface(props: {
       <GlobalProvider>
         <ProjectIconsProvider>
           <BodyTypography />
+          <RadAccount />
           <CommandProvider>
             <DesktopCommands />
             <VoiceProvider>

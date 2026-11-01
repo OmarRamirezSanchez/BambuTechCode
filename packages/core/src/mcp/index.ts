@@ -23,6 +23,17 @@ import type { McpClient } from "./client.js"
 export const ServerName = Schema.String.pipe(Schema.brand("MCP.ServerName"))
 export type ServerName = typeof ServerName.Type
 export const PromptsChanged = ephemeral({ type: "mcp.prompts.changed", schema: { server: Schema.String } })
+// Internal governance observer: no tool arguments, credentials or returned content.
+export const ToolUsed = ephemeral({
+  type: "mcp.tool.used",
+  schema: {
+    id: Schema.String,
+    sessionID: Schema.String,
+    server: Schema.String,
+    tool: Schema.String,
+    status: Schema.Literals(["requested", "succeeded", "failed"]),
+  },
+})
 
 export const Status = Mcp.Status
 export type Status = Mcp.Status
@@ -812,46 +823,71 @@ export const layer = (options?: Options) =>
           ].toSorted((a, b) => a.server.localeCompare(b.server) || a.name.localeCompare(b.name))
         }),
         callTool: Effect.fn("MCP.callTool")(function* (input) {
-          const server = ServerName.make(input.server)
-          // An attached client owns the tools it lists, even when a configured server shares its name, and
-          // owns its name outright when no configured server has it.
-          const client = attached.get(server)?.at(-1)
-          if (client && (client.tools.some((tool) => tool.name === input.name) || !entries.has(server))) {
-            const result = yield* client.client
-              .callTool({ name: input.name, args: input.args, sessionID: input.sessionID })
-              .pipe(
-                Effect.mapError(
-                  (error) =>
-                    new ToolCallError({
-                      server,
-                      tool: input.name,
-                      message: `MCP tool "${input.name}" on client "${server}" failed: ${error.message}`,
-                    }),
-                ),
-              )
-            return { ...result, server, tool: input.name }
-          }
-          const target = yield* requireServer(server)
-          yield* target.entry.startup.await
-          if (!target.entry.client)
-            return yield* new ToolCallError({
-              server: target.name,
+          const id = crypto.randomUUID()
+          if (input.sessionID)
+            yield* bus.publish(ToolUsed, {
+              id,
+              sessionID: input.sessionID,
+              server: String(input.server),
               tool: input.name,
-              message: unavailable(target.name, target.entry.status),
+              status: "requested",
             })
-          const result = yield* recovering(target.name, target.entry, target.entry.client, (connection) =>
-            connection.callTool({ name: input.name, args: input.args, sessionID: input.sessionID }),
-          ).pipe(
-            Effect.mapError(
-              (error) =>
-                new ToolCallError({
-                  server: target.name,
-                  tool: input.name,
-                  message: `MCP tool "${input.name}" on server "${target.name}" failed: ${error.message}`,
-                }),
+          return yield* Effect.gen(function* () {
+            const server = ServerName.make(input.server)
+            // An attached client owns the tools it lists, even when a configured server shares its name, and
+            // owns its name outright when no configured server has it.
+            const client = attached.get(server)?.at(-1)
+            if (client && (client.tools.some((tool) => tool.name === input.name) || !entries.has(server))) {
+              const result = yield* client.client
+                .callTool({ name: input.name, args: input.args, sessionID: input.sessionID })
+                .pipe(
+                  Effect.mapError(
+                    (error) =>
+                      new ToolCallError({
+                        server,
+                        tool: input.name,
+                        message: `MCP tool "${input.name}" on client "${server}" failed: ${error.message}`,
+                      }),
+                  ),
+                )
+              return { ...result, server, tool: input.name }
+            }
+            const target = yield* requireServer(server)
+            yield* target.entry.startup.await
+            if (!target.entry.client)
+              return yield* new ToolCallError({
+                server: target.name,
+                tool: input.name,
+                message: unavailable(target.name, target.entry.status),
+              })
+            const result = yield* recovering(target.name, target.entry, target.entry.client, (connection) =>
+              connection.callTool({ name: input.name, args: input.args, sessionID: input.sessionID }),
+            ).pipe(
+              Effect.mapError(
+                (error) =>
+                  new ToolCallError({
+                    server: target.name,
+                    tool: input.name,
+                    message: `MCP tool "${input.name}" on server "${target.name}" failed: ${error.message}`,
+                  }),
+              ),
+            )
+            return { ...result, server: target.name, tool: input.name }
+          }).pipe(
+            Effect.onExit((exit) =>
+              input.sessionID
+                ? bus
+                    .publish(ToolUsed, {
+                      id,
+                      sessionID: input.sessionID,
+                      server: String(input.server),
+                      tool: input.name,
+                      status: exit._tag === "Success" && !exit.value.isError ? "succeeded" : "failed",
+                    })
+                    .pipe(Effect.asVoid)
+                : Effect.void,
             ),
           )
-          return { ...result, server: target.name, tool: input.name }
         }),
         instructions: Effect.fn("MCP.instructions")(function* () {
           return Array.from(entries)

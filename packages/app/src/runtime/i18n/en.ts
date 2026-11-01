@@ -1,6 +1,10 @@
 import { DESKTOP_NATIVE_ENGLISH } from "./desktop-native"
 
 export const dict = {
+  "rad.history": "My activity in RAD",
+  "rad.syncPending": "History synchronization pending",
+  "rad.unavailable": "RAD is temporarily unavailable",
+  "rad.logout": "Sign out of RAD",
   "experiment.voiceCalls": "Voice calls",
   "voice.call": "Call",
   "voice.mute": "Mute",

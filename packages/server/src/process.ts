@@ -22,6 +22,7 @@ import { createRoutes } from "./routes"
 import { ServerInfo } from "./server-info"
 import { Status } from "./service-status"
 import type { ServerOptions } from "./options"
+import type { LayerNode } from "@opencode/util/effect/layer-node"
 
 export interface Lifecycle<E = never, R = never> {
   readonly onListen: (
@@ -51,6 +52,7 @@ export const start = Effect.fn("ServerProcess.start")(function* <E, R>(
   lifecycle?: Lifecycle<E, R>,
   transform?: Transform,
   remoteURLs?: () => ReadonlyArray<string>,
+  embedding: { overrides?: LayerNode.Replacements; observe?: Bus.Subscriber } = {},
 ) {
   const password = options.password
   if (!password) return yield* Effect.fail(new Error("Missing server password"))
@@ -103,6 +105,7 @@ export const start = Effect.fn("ServerProcess.start")(function* <E, R>(
           password,
         },
         urls,
+        embedding.overrides,
       ).pipe(Layer.provideMerge(NodeHttpServer.layerHttpServices)),
       applicationScope,
     )
@@ -112,6 +115,10 @@ export const start = Effect.fn("ServerProcess.start")(function* <E, R>(
       )
       // Schedules fire from one process only; the table holds all their state.
       yield* Effect.forkIn(Context.get(context, Schedule.Service).run, applicationScope)
+    }
+    if (embedding.observe) {
+      const unsubscribe = yield* Context.get(context, Bus.Service).listen(embedding.observe)
+      yield* Scope.addFinalizer(applicationScope, unsubscribe)
     }
     yield* Ref.set(application, Option.some(Context.get(context, HttpRouter.HttpRouter).asHttpEffect()))
     yield* status.ready
