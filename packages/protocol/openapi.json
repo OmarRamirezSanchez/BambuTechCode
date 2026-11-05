@@ -16296,6 +16296,9 @@
               "schedules": {
                 "type": "boolean"
               },
+              "session_brief": {
+                "type": "boolean"
+              },
               "subagent_depth": {
                 "type": "integer",
                 "minimum": 0,

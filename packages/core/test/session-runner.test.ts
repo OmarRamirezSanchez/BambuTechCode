@@ -61,6 +61,8 @@ import { Agent } from "@opencode/core/agent"
 import { Config } from "@opencode/core/config"
 import { Document, Info } from "@opencode/schema/config"
 import { ConfigCompaction } from "@opencode/schema/config/compaction"
+import { ConfigExperimental } from "@opencode/schema/config/experimental"
+import { SessionBrief } from "@opencode/core/session/brief"
 import { Tool } from "@opencode/core/tool"
 import type { Info as ToolInfo } from "@opencode/schema/tool"
 import { InstructionStateTable, SessionInboxTable, SessionMessageTable, SessionTable } from "@opencode/core/session/sql"
@@ -402,17 +404,7 @@ const layer = Layer.unwrap(
       load: () => Effect.succeed(Instructions.empty),
     })
     const mcpInstructions = Layer.mock(McpInstructions.Service, { load: () => Effect.succeed(Instructions.empty) })
-    const config = Config.testLayer([
-      new Document({
-        type: "document",
-        info: new Info({
-          compaction: new ConfigCompaction.Info({
-            buffer: 3_000,
-            keep: new ConfigCompaction.Keep({ tokens: 1_000 }),
-          }),
-        }),
-      }),
-    ])
+    const config = Config.testLayer([configDocument()])
     const promptModels = Layer.mock(Model.Service, {
       get: () => Effect.undefined,
       all: () => Effect.succeed([]),
@@ -469,44 +461,60 @@ const layer = Layer.unwrap(
         })
       }),
     ).pipe(Layer.provide(runnerLayer), Layer.orDie)
-    return AppNodeBuilder.build(
-      LayerNode.group([
-        Database.node,
-        Bus.node,
-        Form.node,
-        SessionProjector.node,
-        SessionStore.node,
-        SessionInbox.node,
-        Agent.node,
-        Model.node,
-        Tool.node,
-        PluginHooks.node,
-        Job.node,
-        echoNode,
-        SessionRunnerModel.node,
-        InstructionBuiltIns.node,
-        InstructionDiscovery.node,
-        InstructionEntry.node,
-        SkillInstructions.node,
-        ReferenceInstructions.node,
-        Config.node,
-        Snapshot.node,
-        SessionCompaction.node,
-        LayerNodePlatform.llmClient,
-        SessionRunnerLLM.node,
-        SessionExecution.node,
-        Session.node,
-      ]),
-      [
-        ...replacements,
-        Bus.node.replace(Bus.configured({ persist: true })),
-        LocationServiceMap.node.replace(promptLocationNode),
-        Model.node.replace(promptModels),
-        SessionExecution.node.replace(execution),
-      ],
+    return Layer.mergeAll(
+      AppNodeBuilder.build(
+        LayerNode.group([
+          Database.node,
+          Bus.node,
+          Form.node,
+          SessionProjector.node,
+          SessionStore.node,
+          SessionInbox.node,
+          Agent.node,
+          Model.node,
+          Tool.node,
+          PluginHooks.node,
+          Job.node,
+          echoNode,
+          SessionRunnerModel.node,
+          InstructionBuiltIns.node,
+          InstructionDiscovery.node,
+          InstructionEntry.node,
+          SkillInstructions.node,
+          ReferenceInstructions.node,
+          Config.node,
+          Snapshot.node,
+          SessionCompaction.node,
+          LayerNodePlatform.llmClient,
+          SessionRunnerLLM.node,
+          SessionExecution.node,
+          Session.node,
+        ]),
+        [
+          ...replacements,
+          Bus.node.replace(Bus.configured({ persist: true })),
+          LocationServiceMap.node.replace(promptLocationNode),
+          Model.node.replace(promptModels),
+          SessionExecution.node.replace(execution),
+        ],
+      ),
+      // Merge by reference so Config.Test resolves to the memoized instance the runner reads.
+      config,
     )
   }),
 ).pipe(Layer.provideMerge(Layer.sync(RunnerState, makeRunnerState)), Layer.provideMerge(testLLM))
+
+const configDocument = (experimental?: ConfigExperimental.Info) =>
+  new Document({
+    type: "document",
+    info: new Info({
+      compaction: new ConfigCompaction.Info({
+        buffer: 3_000,
+        keep: new ConfigCompaction.Keep({ tokens: 1_000 }),
+      }),
+      ...(experimental ? { experimental } : {}),
+    }),
+  })
 const it = testEffect(layer)
 const sessionID = Session.ID.make("ses_runner_test")
 const otherSessionID = Session.ID.make("ses_runner_other")
@@ -7113,5 +7121,93 @@ describe("SessionRunnerLLM", () => {
     expect(defect).toBeInstanceOf(Error)
     if (!(defect instanceof Error)) return
     expect(defect.message).toBe("Tool input delta before start: call-1")
+  })
+
+  const COMPLETE_BRIEF = [
+    "## Objetivo :",
+    "Automatizar el reporte mensual de ventas.",
+    "## Descripción :",
+    "1. Extraer las ventas del ERP. 2. Publicar el tablero.",
+    "## Contexto :",
+    "Área comercial de Bambú; lo consulta la dirección.",
+    "## Criterios de Aceptación :",
+    "- Tablero publicado",
+  ].join("\n")
+  const enableBrief = Effect.gen(function* () {
+    const config = yield* Config.Test
+    yield* config.setEntries([configDocument(new ConfigExperimental.Info({ session_brief: true }))])
+  })
+  const briefs = (messages: readonly SessionMessage.Info[]) => messages.filter(SessionBrief.isBrief)
+
+  scenario("does not evaluate the brief while experimental.session_brief is off", function* (s) {
+    yield* s.llm.push(TestLLM.text("Listo", "text-off"))
+
+    yield* s.runPrompt("Hazme un reporte")
+
+    expect(userTexts(s.requests[0])).toEqual(["Hazme un reporte"])
+    expect(briefs(yield* s.context)).toHaveLength(0)
+  })
+
+  scenario("asks for a complete brief when the first prompt lacks sections", function* (s) {
+    yield* enableBrief
+    yield* s.llm.push(TestLLM.text("¿Qué contexto tiene?", "text-brief"))
+
+    yield* s.runPrompt("## Objetivo :\nMigrar el reporte mensual a Power BI")
+
+    const texts = userTexts(s.requests[0])
+    expect(texts).toHaveLength(2)
+    expect(texts[1]).toContain("faltan las secciones Descripción, Contexto, Criterios de Aceptación")
+    expect(texts[1]).toContain("entrevista breve")
+    expect(texts[1]).toContain(SessionBrief.TEMPLATE)
+    expect(yield* s.context).toMatchObject([
+      Expected.user("## Objetivo :\nMigrar el reporte mensual a Power BI"),
+      {
+        type: "synthetic",
+        description: "Estructura de la sesión incompleta: Descripción, Contexto, Criterios de Aceptación",
+        metadata: { brief: { boundary: "new", gaps: [{ key: "descripcion", reason: "missing" }, {}, {}] } },
+      },
+      Expected.assistant({}, [Expected.text("¿Qué contexto tiene?")]),
+    ])
+  })
+
+  scenario("confirms a complete brief and evaluates only the first prompt", function* (s) {
+    yield* enableBrief
+    yield* s.llm.push(TestLLM.text("Listo", "text-first"), TestLLM.text("Hecho", "text-second"))
+
+    yield* s.runPrompt(COMPLETE_BRIEF)
+    yield* s.runPrompt("Ahora genera el script")
+
+    expect(userTexts(s.requests[0])[1]).toContain("incluye las cuatro secciones requeridas")
+    expect(messageRoles(s.requests[1])).toEqual(["user", "user", "assistant", "user"])
+    expect(briefs(yield* s.context)).toMatchObject([{ description: "Estructura de la sesión completa" }])
+  })
+
+  scenario("evaluates the first prompt after the user compacts the session", function* (s) {
+    yield* enableBrief
+    yield* s.llm.push(TestLLM.text("Listo", "text-first"), TestLLM.text("## Objective\n- summary", "text-summary"))
+    yield* s.runPrompt(COMPLETE_BRIEF)
+    yield* s.session.compact({ sessionID })
+    yield* s.resume
+    yield* s.llm.push(TestLLM.text("Sigo", "text-second"))
+
+    yield* s.runPrompt("Continúa con el siguiente paso")
+
+    expect(s.requests).toHaveLength(3)
+    const brief = userTexts(s.requests[2]).at(-1)
+    expect(brief).toContain("limpió el contexto")
+    expect(brief).toContain("faltan las secciones Objetivo, Descripción, Contexto, Criterios de Aceptación")
+    expect(briefs(yield* s.context)).toMatchObject([{ metadata: { brief: { boundary: "cleared" } } }])
+  })
+
+  scenario("does not evaluate the brief of a subagent session", function* (s) {
+    yield* enableBrief
+    yield* insertSession(otherSessionID, sessionID)
+    yield* s.llm.push(TestLLM.text("Listo", "text-child"))
+
+    yield* s.session.prompt({ sessionID: otherSessionID, text: "Revisa el módulo de ventas", resume: false })
+    yield* s.session.resume(otherSessionID)
+
+    expect(userTexts(s.requests[0])).toEqual(["Revisa el módulo de ventas"])
+    expect(briefs(yield* s.session.context(otherSessionID))).toHaveLength(0)
   })
 })

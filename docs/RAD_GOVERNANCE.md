@@ -38,6 +38,22 @@ Los cambios se capturan en el servidor mediante eventos, aunque se cierre la pes
 
 La entrada está pensada para la aplicación web local. Las herramientas de desarrollo y CLI originales siguen existiendo; para uso gobernado deben conectarse a una entrada autorizada. No publicar el Vite de desarrollo ni los puertos de los runtimes internos.
 
+## Estructura de la sesión de trabajo
+
+Cada runtime gobernado arranca con `experimental.session_brief` activo. Al primer prompt de una sesión nueva, y al primero después de que el usuario compacte una sesión, el servidor evalúa el texto contra la estructura requerida y registra el resultado como un mensaje sintético visible para el modelo y en la transcripción:
+
+```markdown
+## Objetivo :
+
+## Descripción :
+
+## Contexto :
+
+## Criterios de Aceptación :
+```
+
+Si falta una sección o solo contiene el comentario de plantilla, el modelo no inicia la tarea: indica qué reforzar, sugiere un prompt completo con esa estructura y ofrece una entrevista breve para profundizar en contexto y objetivos. Si las cuatro secciones están presentes, verifica que sean suficientes y continúa. Los prompts posteriores de la misma sesión, las compactaciones automáticas y las sesiones de subagentes no se evalúan. La regla vive en `packages/core/src/session/brief.ts`; fuera del runtime gobernado se activa con `"experimental": { "session_brief": true }` en la configuración.
+
 ## Pruebas
 
 Desde `packages/server`:

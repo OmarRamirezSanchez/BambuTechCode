@@ -661,6 +661,25 @@ automatic compaction doesn't pause the session. Defaults to `false`. See
 }
 ```
 
+### Session brief
+
+Set `session_brief` to `true` to check the first prompt of every new session, and the first prompt after you
+compact a session, against the work-session brief. The brief has four sections: `Objetivo`, `Descripción`,
+`Contexto` and `Criterios de Aceptación`. Defaults to `false`.
+
+```jsonc
+{
+  "experimental": {
+    "session_brief": true,
+  },
+}
+```
+
+When a section is missing or holds only the template placeholder, the model does not start the task. It names the
+sections to reinforce, suggests a complete prompt in that structure, and offers a short interview to deepen the
+context and objectives. When every section is present, it checks they are specific enough and continues. Later
+prompts in the same session, automatic compactions, and subagent sessions are not evaluated.
+
 ### Image generation
 
 Set `image_generate` to `true` to give agents the [`image_generate`](/tools#image-generate) tool for creating and

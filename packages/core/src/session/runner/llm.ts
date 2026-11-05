@@ -12,6 +12,7 @@ import { SessionContext } from "../context.js"
 import { SessionEvent } from "../event.js"
 import { SessionInbox } from "../inbox.js"
 import { SessionBackground } from "../background.js"
+import { SessionBrief } from "../brief.js"
 import { Job } from "../../job.js"
 import { SessionHistory } from "../history.js"
 import { SessionModelRequest } from "../model-request.js"
@@ -44,6 +45,7 @@ const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
     const bus = yield* Bus.Service
+    const brief = yield* SessionBrief.Service
     const lifecycle = yield* LocationLifecycle.Service
     const store = yield* SessionStore.Service
     const context = yield* SessionContext.Service
@@ -197,6 +199,8 @@ const layer = Layer.effect(
                       onlyIfMissing: true,
                     })
                   if (promoted > 0) step = 1
+                  // The brief's verdict must be in the history this step loads.
+                  if (promoted > 0) yield* brief.apply(sessionID)
                   return { _tag: "Ready" as const, context: yield* context.load(selected) }
                 }),
               )
@@ -440,6 +444,7 @@ export const node = makeLocationNode({
   layer,
   deps: [
     Bus.node,
+    SessionBrief.node,
     LocationLifecycle.node,
     llmClient,
     SessionContext.node,

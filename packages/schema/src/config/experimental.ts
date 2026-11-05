@@ -37,6 +37,10 @@ export class Info extends Schema.Class<Info>("ConfigExperimental.Info")({
   schedules: Schema.Boolean.pipe(optional).annotate({
     description: "Enable experimental scheduled tasks that wake a session with a prompt. Defaults to false.",
   }),
+  session_brief: Schema.Boolean.pipe(optional).annotate({
+    description:
+      "Evaluate the first prompt of every new top-level session, and the first prompt after the user compacts a session, against the work-session brief (Objetivo, Descripción, Contexto, Criterios de Aceptación). When sections are missing or empty, the model proposes a complete prompt, says what to reinforce, or offers an interview before starting. Defaults to false.",
+  }),
   subagent_depth: NonNegativeInt.pipe(optional).annotate({
     description: "Maximum subagent nesting depth. Defaults to 1.",
   }),

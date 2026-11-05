@@ -18,7 +18,11 @@ export async function radRuntime(directory: string) {
         port: 0,
         password,
         database: { path: path.join(directory, "conversations.sqlite") },
-        config: { directory: path.join(directory, "config") },
+        // Governed work sessions start from the Bambú brief; only managed settings outrank this document.
+        config: {
+          directory: path.join(directory, "config"),
+          content: JSON.stringify({ experimental: { session_brief: true } }),
+        },
       },
       undefined,
       undefined,
