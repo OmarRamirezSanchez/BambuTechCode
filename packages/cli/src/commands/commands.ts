@@ -566,7 +566,7 @@ const Root = Spec.make(typeof OPENCODE_CLI_NAME === "string" ? OPENCODE_CLI_NAME
       },
     }),
     Spec.make("rad", {
-      description: "Start the RAD-governed runtime of BambuTechCode desktop (reads the RAD token from stdin)",
+      description: "Start the RAD-governed runtime of BambuTechCode desktop (reads the RAD session from stdin)",
     }),
     Spec.make("serve", {
       description: "Start the v2 API and web server",

@@ -83,6 +83,8 @@ export function createRadAccount() {
 }
 
 export function RadAccount() {
+  // On the desktop this corner holds the window controls; Settings → RAD session covers the account there.
+  if (usePlatform().platform === "desktop") return null
   const language = useLanguage()
   const account = createRadAccount()
 
