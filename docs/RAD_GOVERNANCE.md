@@ -30,6 +30,27 @@ La configuración local de RAD permite expresamente localhost y 127.0.0.1 en el 
 
 El menú RAD muestra la cuenta, acceso al historial y cierre de sesión. Un estado de sincronización pendiente indica que todavía hay información por enviar. Cada cuenta y ambiente utiliza una base de conversaciones y configuración separada. Las conversaciones antiguas del modo sin autenticación no se importan ni se atribuyen automáticamente.
 
+## Modelos a través de BambuIAFrameWork
+
+Con `BAMBU_IA_ORIGIN` definido, todo el consumo de modelos del runtime gobernado pasa por BambuIAFrameWork (proyecto `BambuTechIAFramework` del espacio de trabajo). Agrega la variable en la segunda terminal antes de `bun run dev:rad`:
+
+```powershell
+$env:BAMBU_IA_ORIGIN='http://127.0.0.1:8080'
+```
+
+Fuera de localhost la URL debe ser HTTPS. Sin la variable, el runtime se comporta como antes.
+
+- **Inicio de sesión.** El gateway cambia el token de RAD por una consola del Framework (`/auth/exchange`) y la guarda en el runtime de la persona como credencial OAuth de la integración `bambu-ia`. El token de RAD no sale del gateway.
+- **Renovación.** El plugin `bambu-ia` del core (`packages/core/src/plugin/provider/bambu-ia.ts`) renueva el token corto con el refresh token. Si el Framework rechaza la renovación, la integración pide volver a iniciar sesión con RAD.
+- **Modelos y políticas.** El plugin descarga `/v1/config` al arrancar y cada minuto. Solo queda disponible el proveedor `bambu-ia`, con los modelos que RAD habilitó para la persona, y se aplican las reglas del arnés (`tool.use`, `integration.use`). El runtime también trae fija la política `provider.use` que niega cualquier otro proveedor, así que ningún proveedor local queda habilitado aunque el Framework no responda al arrancar.
+- **Sesiones de trabajo.** Cada llamada al modelo lleva `x-bambu-session` con el ID de la sesión de BambuTechCode; el Framework agrupa el consumo y el historial con ese ID.
+- **Cierre de sesión.** Al cerrar la última sesión de RAD de la persona, el gateway cierra la consola en el Framework (`/auth/logout`) y borra la credencial del runtime.
+- **Estado.** `GET /api/experimental/rad/me` incluye `framework`: `disabled`, `connecting`, `connected` o `unavailable`. Si el intercambio falla, se reintenta en la siguiente solicitud, después de 30 segundos.
+
+La sesión renovable dura como máximo `REFRESH_TTL_SECONDS` del Framework (12 h por defecto), más que las 8 h de la cookie del gateway. Una baja en RAD solo corta el acceso al instante si RAD Backend avisa al Framework (`/auth/revoke`).
+
+Los modelos se habilitan, se asignan por rol o persona y se auditan en RAD, en **Gobernanza IA → Modelos IA** y **Consumo IA**. Para probar todo en local sin Dev ni AWS (RAD local, Framework con Bedrock simulado y esta entrada), ver `docs/E2E_GOBERNANZA_IA_LOCAL.md` en el espacio de trabajo de RAD.
+
 ## Historial
 
 El backend central conserva mensajes visibles de usuario/asistente, sesiones, categorías, proyectos asociados, accesos y metadatos de herramientas MCP. La categoría inicial se calcula con reglas conservadoras y puede corregirse en RAD. La asociación a un proyecto también se puede realizar desde el detalle de la sesión en Gobernanza.
@@ -63,6 +84,12 @@ bun typecheck
 bun test test/rad-sync.test.ts test/rad-gateway.test.ts
 ```
 
-La prueba del gateway abre runtimes reales con bases temporales y demuestra que una cuenta no puede leer sesiones de otra. La prueba de sincronización comprueba reintentos, eventos concurrentes y exclusión de razonamiento interno. El procedimiento no utiliza cuentas ni conversaciones reales.
+Desde `packages/core`:
+
+```powershell
+bun test test/plugin/provider-bambu-ia.test.ts
+```
+
+La prueba del gateway abre runtimes reales con bases temporales y demuestra que una cuenta no puede leer sesiones de otra. Con un Framework simulado, también comprueba el intercambio al iniciar sesión, que el runtime solo ofrezca `bambu-ia`, que el token de RAD no llegue al runtime y el cierre de la consola al salir. La prueba del plugin cubre la renovación del token, la recarga cada minuto, el encabezado de sesión y el aviso para volver a iniciar sesión. La prueba de sincronización comprueba reintentos, eventos concurrentes y exclusión de razonamiento interno. El procedimiento no utiliza cuentas ni conversaciones reales.
 
 En Windows, Git puede materializar `packages/app/src/custom-elements.d.ts` como texto en lugar del enlace a `packages/ui/src/custom-elements.d.ts`. Eso impide el typecheck del frontend. Para verificar localmente sin cambiar el enlace versionado, se puede materializar temporalmente el destino durante el check y restaurar los bytes originales después. No sustituir el enlace por otro archivo en un commit.

@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto"
 import { ServerProcess } from "./process"
 import { RadSync } from "./rad-sync"
 
-export async function radRuntime(directory: string) {
+export async function radRuntime(directory: string, options: { governed?: boolean } = {}) {
   await mkdir(directory, { recursive: true })
   const journal = new RadSync(path.join(directory, "governance.sqlite"))
   const scope = Scope.makeUnsafe()
@@ -18,10 +18,21 @@ export async function radRuntime(directory: string) {
         port: 0,
         password,
         database: { path: path.join(directory, "conversations.sqlite") },
-        // Governed work sessions start from the Bambú brief; only managed settings outrank this document.
+        // Governed work sessions start from the Bambú brief; only managed settings outrank this document. With
+        // BambuIAFrameWork, its provider is the only one allowed, even before its config loads.
         config: {
           directory: path.join(directory, "config"),
-          content: JSON.stringify({ experimental: { session_brief: true } }),
+          content: JSON.stringify({
+            experimental: { session_brief: true },
+            ...(options.governed
+              ? {
+                  policies: [
+                    { action: "provider.use", resource: "*", effect: "deny" },
+                    { action: "provider.use", resource: "bambu-ia", effect: "allow" },
+                  ],
+                }
+              : {}),
+          }),
         },
       },
       undefined,

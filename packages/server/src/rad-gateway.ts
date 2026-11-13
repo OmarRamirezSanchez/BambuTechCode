@@ -3,12 +3,23 @@ import { createHash, randomUUID } from "node:crypto"
 import { connect } from "node:net"
 import { readFile, stat } from "node:fs/promises"
 import path from "node:path"
+import { Schema } from "effect"
+import { BambuIA } from "@opencode/core/plugin/provider/bambu-ia"
 import { radRuntime } from "./rad-runtime"
 import type { RadCall } from "./rad-sync"
 
 type Identity = { id: number; name: string; email: string }
 type Account = { token: string; user: Identity }
-type Runtime = Awaited<ReturnType<typeof radRuntime>> & { account: Account }
+type Runtime = Awaited<ReturnType<typeof radRuntime>> & {
+  account: Account
+  // The RAD token whose BambuIAFrameWork console the runtime holds, and when to retry after a failed exchange.
+  framework: { linked?: string; retry: number; queue: Promise<void> }
+}
+type FrameworkCredential = {
+  id: string
+  integrationID: string
+  value: { type: string; refresh?: string; metadata?: { consoleID?: string } }
+}
 export interface RadGatewayConfig {
   origin: string
   radOrigin: string
@@ -61,7 +72,9 @@ export function createRadGateway(config: RadGatewayConfig) {
     }
     return { key, value: { ...value, user } }
   }
-  const runtime = (value: Account) => {
+  // With BambuIAFrameWork every model call goes through it; the runtime's core plugin reads the same origin.
+  const framework = BambuIA.origin()
+  const open = (value: Account) => {
     const existing = runtimes.get(value.user.id)
     if (existing)
       return existing.then((item) => {
@@ -70,14 +83,94 @@ export function createRadGateway(config: RadGatewayConfig) {
       })
     // An environment change gets a separate history, even when user ids overlap.
     const issuer = createHash("sha256").update(config.api).digest("hex").slice(0, 16)
-    const pending = radRuntime(path.join(config.data, issuer, String(value.user.id)))
-      .then((item) => ({ ...item, account: value }))
+    const pending = radRuntime(path.join(config.data, issuer, String(value.user.id)), { governed: Boolean(framework) })
+      .then((item): Runtime => ({ ...item, account: value, framework: { retry: 0, queue: Promise.resolve() } }))
       .catch((error) => {
         runtimes.delete(value.user.id)
         throw error
       })
     runtimes.set(value.user.id, pending)
     return pending
+  }
+  const runtime = async (value: Account) => {
+    const app = await open(value)
+    await linked(app)
+    return app
+  }
+  const core = async (app: Runtime, method: string, endpoint: string, value?: unknown) => {
+    const response = await fetch(app.origin + endpoint, {
+      method,
+      headers: { Authorization: app.authorization, "Content-Type": "application/json" },
+      body: value === undefined ? undefined : JSON.stringify(value),
+      signal: AbortSignal.timeout(30000),
+    })
+    if (!response.ok) throw Object.assign(Error("Code runtime unavailable"), { status: response.status })
+    return response
+  }
+  const consoles = async (app: Runtime) =>
+    ((await (await core(app, "GET", "/api/credential")).json()) as { data: FrameworkCredential[] }).data.filter(
+      (item) => item.integrationID === BambuIA.integrationID,
+    )
+  // Each RAD sign-in becomes the runtime's BambuIAFrameWork console. The core plugin renews it from then on, so
+  // the RAD token itself never reaches the runtime.
+  const link = async (app: Runtime) => {
+    const token = app.account.token
+    if (!framework || app.framework.linked === token || app.framework.retry > Date.now()) return
+    const previous = await consoles(app)
+    const response = await fetch(framework + "/auth/exchange", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: JSON.stringify({ consoleName: "BambuTechCode", consoleId: previous.at(-1)?.value.metadata?.consoleID }),
+      redirect: "error",
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!response.ok) throw Object.assign(Error("BambuIAFrameWork unavailable"), { status: response.status })
+    const session = Schema.decodeUnknownSync(BambuIA.Session)(((await response.json()) as { data: unknown }).data)
+    await core(app, "POST", "/api/credential", {
+      integrationID: BambuIA.integrationID,
+      label: session.user.email,
+      value: BambuIA.credential(session),
+    })
+    for (const item of previous) await core(app, "DELETE", "/api/credential/" + item.id)
+    app.framework.linked = token
+  }
+  // One exchange at a time per runtime; a failure waits before the next request tries again.
+  const linked = (app: Runtime) => {
+    app.framework.queue = app.framework.queue
+      .then(() => link(app))
+      .catch(() => {
+        app.framework.retry = Date.now() + 30000
+      })
+    return app.framework.queue
+  }
+  const frameworkState = (app: Runtime | undefined, token: string) => {
+    if (!framework) return "disabled"
+    if (app?.framework.linked === token) return "connected"
+    // The runtime opens on the first API request; until then, or until the next retry, it is still connecting.
+    if (app && app.framework.retry > Date.now()) return "unavailable"
+    return "connecting"
+  }
+  // Signing out of the last RAD session closes the console in the Framework and removes it from the runtime.
+  const unlink = async (userID: number) => {
+    const entry = runtimes.get(userID)
+    if (!framework || !entry) return
+    const app = await entry
+    app.framework.queue = app.framework.queue
+      .then(async () => {
+        for (const item of await consoles(app)) {
+          await fetch(framework + "/auth/logout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refreshToken: item.value.refresh }),
+            redirect: "error",
+            signal: AbortSignal.timeout(15000),
+          }).catch(() => undefined)
+          await core(app, "DELETE", "/api/credential/" + item.id)
+        }
+        app.framework.linked = undefined
+      })
+      .catch(() => undefined)
+    await app.framework.queue
   }
   const json = (res: ServerResponse, status: number, value: unknown) => {
     res.writeHead(status, { "Content-Type": "application/json" })
@@ -179,10 +272,13 @@ export function createRadGateway(config: RadGatewayConfig) {
         return
       }
       if (url.pathname === prefix + "/logout" && req.method === "POST") {
-        const key = cookie(req, "rad_code") ?? ""
+        const key = cookie(req, "rad_code") ?? "",
+          ended = sessions.get(key)
         sessions.delete(key)
         for (const socket of sockets.get(key) ?? []) socket.destroy()
         sockets.delete(key)
+        if (ended && !Array.from(sessions.values()).some((item) => item.user.id === ended.user.id))
+          await unlink(ended.user.id)
         res.setHeader("Set-Cookie", cookieHeader("rad_code", "", 0))
         res.setHeader("Clear-Site-Data", '"cache", "storage"')
         json(res, 200, { loggedOut: true })
@@ -203,7 +299,7 @@ export function createRadGateway(config: RadGatewayConfig) {
           app = active ? await active : undefined
         const pending =
           app?.journal.journal.query<{ count: number }, []>("SELECT count(*) count FROM pending").get()?.count ?? 0
-        json(res, 200, { user: auth.value.user, radOrigin, pending })
+        json(res, 200, { user: auth.value.user, radOrigin, pending, framework: frameworkState(app, auth.value.token) })
         return
       }
       if (url.pathname.startsWith("/api/")) {

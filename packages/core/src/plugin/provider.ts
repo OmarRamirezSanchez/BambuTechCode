@@ -1,5 +1,6 @@
 import { AmazonBedrockPlugin } from "./provider/amazon-bedrock.js"
 import { AzurePlugin } from "./provider/azure.js"
+import { BambuIAPlugin } from "./provider/bambu-ia.js"
 import { CerebrasPlugin } from "./provider/cerebras.js"
 import { ChatGPTPlugin } from "./provider/chatgpt.js"
 import { CloudflareAIGatewayPlugin } from "./provider/cloudflare-ai-gateway.js"
@@ -33,6 +34,7 @@ import type { PluginInternal } from "./internal.js"
 export const ProviderPlugins: PluginInternal.InternalPlugin[] = [
   AmazonBedrockPlugin,
   AzurePlugin,
+  BambuIAPlugin,
   CerebrasPlugin,
   ChatGPTPlugin,
   CloudflareAIGatewayPlugin,
