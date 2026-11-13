@@ -133,6 +133,9 @@ const createModelsController = (directory: Accessor<string | undefined>) => {
 
     if (state === "show") return true
 
+    // BambuIAFrameWork lists only the models RAD enabled for the member, so none is hidden for its age.
+    if (model.providerID === "bambu-ia") return true
+
     if (latestSet().has(key) || freeSet().has(key)) return true
 
     // Models without a parseable release date stay visible.
