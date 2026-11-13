@@ -24,6 +24,7 @@ import { createDesktopPlatform } from "./platform"
 import { bindDesktopMenu } from "./platform/menu"
 import { createSidecarResolver, initializationData, sidecarHttp } from "./startup/initialization"
 import { preloadStoredLocale } from "./startup/locale"
+import { RadSignIn } from "./startup/rad-sign-in"
 import { LoadingSplash } from "./startup/splash"
 import { getLastActiveUrl } from "./window/route-storage"
 import { DesktopMemoryRouter } from "./window/router"
@@ -156,6 +157,7 @@ export function DesktopApp(props: { api: ElectronAPI; version: string }) {
               preview={import.meta.env.OPENCODE_TEST_ONBOARDING}
               onDrawEnd={() => setStartup("drawingReady", true)}
             />
+            <RadSignIn api={props.api} />
           </div>
         </Show>
       </AppBaseProviders>

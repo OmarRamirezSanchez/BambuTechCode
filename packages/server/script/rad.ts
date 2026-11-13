@@ -12,6 +12,8 @@ const gateway = createRadGateway({
   api: required("RAD_USAGE_API"),
   data: required("RAD_CODE_DATA"),
   assets: path.resolve(import.meta.dir, "../../app/dist"),
+  // RAD's public Firebase web config ({"apiKey","authDomain","projectId"}); its Google sign-in is RAD's own.
+  firebase: JSON.parse(required("RAD_FIREBASE_CONFIG")),
   vite: process.env.RAD_CODE_VITE,
 })
 gateway.server.listen(Number(new URL(origin).port || 443), "127.0.0.1", () =>

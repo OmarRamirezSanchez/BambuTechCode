@@ -1,4 +1,5 @@
 export type SettingsRootTab =
+  | "account"
   | "general"
   | "appearance"
   | "notifications"
@@ -44,6 +45,7 @@ export type SettingsHostView = ({ type: "root"; tab: SettingsRootTab; server?: s
 export type SettingsTransientView = Pick<SettingsView, "target" | "searchActivation">
 
 const rootTabs: Record<SettingsRootTab, true> = {
+  account: true,
   general: true,
   appearance: true,
   notifications: true,

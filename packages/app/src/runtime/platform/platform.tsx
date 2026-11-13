@@ -34,6 +34,19 @@ export type FatalRendererErrorLog = {
 }
 
 type PlatformBase = {
+  /** RAD-governed desktop builds: the member's RAD account, which the desktop's main process holds. */
+  rad?: {
+    status(): Promise<{
+      governed: boolean
+      name?: string
+      email?: string
+      radOrigin?: string
+      framework?: string
+      pending: number
+      error: boolean
+    }>
+    logout(): Promise<void>
+  }
   requestMicrophone?(): Promise<boolean>
   setVoiceCallActive?(active: boolean): Promise<void>
   /** App version */

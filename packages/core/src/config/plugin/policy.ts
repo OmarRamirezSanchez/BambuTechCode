@@ -3,6 +3,7 @@ export * as ConfigPolicyPlugin from "./policy.js"
 import { define } from "@opencode/plugin/effect/plugin"
 import { Effect } from "effect"
 import { Config } from "../../config.js"
+import { ConfigIntegration } from "../integration.js"
 import { ManagedPolicy } from "../../managed-policy.js"
 import { State } from "../../state.js"
 import { Wildcard } from "../../util/wildcard.js"
@@ -13,7 +14,9 @@ export const Plugin = define({
   effect: Effect.fn(function* (ctx) {
     const config = yield* Config.Service
     const reload = State.batch(
-      Effect.all([ctx.provider.reload(), ctx.mcp.reload(), ctx.skill.reload()], { discard: true }),
+      Effect.all([ctx.integration.reload(), ctx.provider.reload(), ctx.mcp.reload(), ctx.skill.reload()], {
+        discard: true,
+      }),
     )
     const loaded = yield* ConfigEntryObserver.observe(config, ctx.event, reload)
     // Documents reverse so earlier-loaded policy wins: managed policy, then a Console config document, then user
@@ -33,6 +36,21 @@ export const Plugin = define({
         if (record.provider.activation === "enabled") denied.push(record.provider.id)
       }
       if (denied.length) runSync(Effect.logDebug("providers denied by policy", { providers: denied }))
+    })
+    // A denied provider is not offered for connection either. MCP servers follow `integration.use` instead, and an
+    // integration that delivers a loaded config document keeps its place: removing it would drop the policy itself.
+    yield* ctx.integration.transform((integrations) => {
+      const current = policies()
+      const delivering = new Set<string>(
+        loaded.entries
+          .filter((entry) => entry instanceof ConfigIntegration.Document)
+          .map((entry) => entry.integrationID),
+      )
+      for (const integration of integrations.list()) {
+        if (integration.metadata?.source === "mcp" || delivering.has(integration.id)) continue
+        if (ManagedPolicy.decision(current, "provider.use", integration.id) === "deny")
+          integrations.remove(integration.id)
+      }
     })
     yield* ctx.mcp.transform((servers) => {
       const current = policies()

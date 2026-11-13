@@ -72,19 +72,23 @@ export async function radRuntime(directory: string, options: { governed?: boolea
   if (address._tag === "UnixPathAddress") throw Error("TCP runtime required")
   const origin = `http://127.0.0.1:${address.port}`
   const authorization = "Basic " + Buffer.from("opencode:" + password).toString("base64")
-  const core = async <T>(endpoint: string): Promise<T> => {
+  const request = async (method: string, endpoint: string, value?: unknown) => {
     const response = await fetch(origin + endpoint, {
-      headers: { Authorization: authorization },
+      method,
+      headers: { Authorization: authorization, "Content-Type": "application/json" },
+      body: value === undefined ? undefined : JSON.stringify(value),
       signal: AbortSignal.timeout(30000),
     })
-    if (!response.ok) throw Error("Code runtime unavailable")
-    return response.json() as Promise<T>
+    if (!response.ok) throw Object.assign(Error("Code runtime unavailable"), { status: response.status })
+    return response
   }
   return {
     origin,
+    password,
     authorization,
     journal,
-    core,
+    request,
+    core: async <T>(endpoint: string) => (await request("GET", endpoint)).json() as Promise<T>,
     close: async () => {
       await Effect.runPromise(Scope.close(scope, Exit.void))
       journal.close()

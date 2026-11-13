@@ -86,6 +86,26 @@ describe("ConfigPolicyPlugin.Plugin", () => {
     }),
   )
 
+  it.effect("stops offering denied providers for connection while keeping MCP servers", () =>
+    Effect.gen(function* () {
+      const integrations = yield* Integration.Service
+      yield* integrations.transform((editor) => {
+        editor.update(Integration.ID.make("openai"), (integration) => (integration.name = "OpenAI"))
+        editor.update(Integration.ID.make("bambu-ia"), (integration) => (integration.name = "BambuIAFrameWork"))
+        editor.update(Integration.ID.make("mcp_docs"), (integration) => {
+          integration.name = "Docs"
+          integration.metadata = { source: "mcp" }
+        })
+      })
+      yield* addPlugin([document(provider("deny", "*"), provider("allow", "bambu-ia"))])
+
+      expect((yield* integrations.list()).map((integration) => String(integration.id)).toSorted()).toEqual([
+        "bambu-ia",
+        "mcp_docs",
+      ])
+    }),
+  )
+
   it.effect("prevents project policy from overriding user-global policy", () =>
     Effect.gen(function* () {
       const catalog = yield* Provider.Service

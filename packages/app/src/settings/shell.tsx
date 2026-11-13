@@ -25,6 +25,8 @@ import { useWorkspacesPrefetch } from "./workspaces/queries"
 import { SettingsProjects } from "./workspaces/projects"
 import { SettingsExtensions } from "./providers/extensions"
 import { SettingsAbout } from "./about/about"
+import { SettingsAccount } from "./account/account"
+import { createRadAccount } from "@/rad-account"
 import { SettingsServerDataScope } from "./server-scope"
 import { SettingsNavigation, type SettingsNavGroup } from "./navigation"
 import { SettingsProjectGeneral } from "./workspaces/project"
@@ -233,6 +235,8 @@ function RootSettings() {
   })
 
   const multiple = createMemo(() => inventory().length > 1)
+  // A governed BambuTechCode shows the member's RAD session first.
+  const rad = createRadAccount()
 
   // The selected server while its pages can load; an unreachable one shows its pages' unavailable state instead.
   const reachable = createMemo(() => {
@@ -262,6 +266,9 @@ function RootSettings() {
       .map((item) => ({ value: item.value.id, icon: item.value.icon ?? pageIcons.extensions, label: item.value.title }))
 
   const groups = createMemo<SettingsNavGroup[]>(() => [
+    ...(rad.state.governed
+      ? [{ items: [{ value: "account", icon: pageIcons.account, label: language.t(pageLabels.account) }] }]
+      : []),
     {
       items: serverTabs.map((item) => ({
         ...item,
@@ -302,6 +309,11 @@ function RootSettings() {
       onBack={() => surface.close()}
       onChange={change}
     >
+      <Tabs.Content value="account" class="settings-panel">
+        <Show when={rad.state.governed}>
+          <SettingsAccount />
+        </Show>
+      </Tabs.Content>
       <Tabs.Content value="general" class="settings-panel">
         <SettingsGeneral />
       </Tabs.Content>

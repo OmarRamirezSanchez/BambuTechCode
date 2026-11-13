@@ -347,6 +347,7 @@ describe("config plugin reloads", () => {
         Credential.Event.Switched.type,
       ])
       const counts = new Map<string, number>()
+      // The provider and policy plugins each reload integrations on a config update, as two plugins do for skills.
       const reloads = { agent: 0, command: 0, skill: 0, reference: 0, websearch: 0, integration: 0 }
       const count = (type: string) => counts.get(type) ?? 0
       yield* Effect.acquireRelease(
@@ -422,7 +423,7 @@ describe("config plugin reloads", () => {
             reloads.skill === 2 &&
             reloads.reference === 1 &&
             reloads.websearch === 1 &&
-            reloads.integration === 1,
+            reloads.integration === 2,
         ),
       )
       expect(Object.fromEntries(counts)).toEqual({})
@@ -449,7 +450,7 @@ describe("config plugin reloads", () => {
             reloads.skill === 4 &&
             reloads.reference === 2 &&
             reloads.websearch === 2 &&
-            reloads.integration === 2,
+            reloads.integration === 4,
         ),
       )
       expect(Object.fromEntries(counts)).toEqual({})
@@ -466,7 +467,7 @@ describe("config plugin reloads", () => {
             reloads.skill === 6 &&
             reloads.reference === 3 &&
             reloads.websearch === 4 &&
-            reloads.integration === 3,
+            reloads.integration === 6,
         ),
       )
       expect(Object.fromEntries(counts)).toEqual({
