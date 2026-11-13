@@ -3,22 +3,19 @@ import { createHash, randomUUID } from "node:crypto"
 import { connect } from "node:net"
 import { readFile, stat } from "node:fs/promises"
 import path from "node:path"
-import { Schema } from "effect"
 import { BambuIA } from "@opencode/core/plugin/provider/bambu-ia"
+import { frameworkLink } from "./rad-framework"
+import { radAuthApi, radLogin, radRefresh } from "./rad-login"
 import { radRuntime } from "./rad-runtime"
-import type { RadCall } from "./rad-sync"
+import { radCall } from "./rad-sync"
 
 type Identity = { id: number; name: string; email: string }
-type Account = { token: string; user: Identity }
+type Account = { token: string; refreshToken: string; user: Identity }
+/** The public web config of RAD's Firebase project, which owns its Google sign-in. */
+export type FirebaseConfig = { apiKey: string; authDomain: string; projectId: string }
 type Runtime = Awaited<ReturnType<typeof radRuntime>> & {
   account: Account
-  // The RAD token whose BambuIAFrameWork console the runtime holds, and when to retry after a failed exchange.
-  framework: { linked?: string; retry: number; queue: Promise<void> }
-}
-type FrameworkCredential = {
-  id: string
-  integrationID: string
-  value: { type: string; refresh?: string; metadata?: { consoleID?: string } }
+  framework: ReturnType<typeof frameworkLink>
 }
 export interface RadGatewayConfig {
   origin: string
@@ -26,6 +23,7 @@ export interface RadGatewayConfig {
   api: string
   data: string
   assets: string
+  firebase: FirebaseConfig
   vite?: string
 }
 
@@ -46,24 +44,20 @@ export function createRadGateway(config: RadGatewayConfig) {
       ?.slice(name.length + 1)
   const cookieHeader = (name: string, value: string, age: number) =>
     `${name}=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${age}${origin.startsWith("https:") ? "; Secure" : ""}`
-  const call =
-    (account: Pick<Account, "token">): RadCall =>
-    async <T>(endpoint: string, body?: unknown) => {
-      const response = await fetch(config.api + endpoint, {
-        method: body === undefined ? "GET" : "POST",
-        headers: { Authorization: "Bearer " + account.token, "Content-Type": "application/json" },
-        body: body === undefined ? undefined : JSON.stringify(body),
-        redirect: "error",
-        signal: AbortSignal.timeout(15000),
-      })
-      if (!response.ok) throw Object.assign(Error("RAD unavailable"), { status: response.status })
-      return ((await response.json()) as { data: T }).data
-    }
+  const authApi = radAuthApi(config.api)
+  const call = (account: Pick<Account, "token">) => radCall(config.api, account.token)
+  // An expired access token is renewed once with the member's refresh token before the session ends.
+  const identify = (value: Account) =>
+    call(value)<Identity>("/me").catch(async (error: { status?: number }) => {
+      if (error.status !== 401) throw error
+      value.token = (await radRefresh(authApi, value)).token
+      return call(value)<Identity>("/me")
+    })
   const account = async (req: IncomingMessage) => {
     const key = cookie(req, "rad_code") ?? "",
       value = sessions.get(key)
     if (!value) return undefined
-    const user = await call(value)<Identity>("/me").catch(() => undefined)
+    const user = await identify(value).catch(() => undefined)
     if (!user) {
       sessions.delete(key)
       for (const socket of sockets.get(key) ?? []) socket.destroy()
@@ -84,7 +78,7 @@ export function createRadGateway(config: RadGatewayConfig) {
     // An environment change gets a separate history, even when user ids overlap.
     const issuer = createHash("sha256").update(config.api).digest("hex").slice(0, 16)
     const pending = radRuntime(path.join(config.data, issuer, String(value.user.id)), { governed: Boolean(framework) })
-      .then((item): Runtime => ({ ...item, account: value, framework: { retry: 0, queue: Promise.resolve() } }))
+      .then((item): Runtime => ({ ...item, account: value, framework: frameworkLink(item.request) }))
       .catch((error) => {
         runtimes.delete(value.user.id)
         throw error
@@ -94,83 +88,8 @@ export function createRadGateway(config: RadGatewayConfig) {
   }
   const runtime = async (value: Account) => {
     const app = await open(value)
-    await linked(app)
+    await app.framework.sync(app.account.token)
     return app
-  }
-  const core = async (app: Runtime, method: string, endpoint: string, value?: unknown) => {
-    const response = await fetch(app.origin + endpoint, {
-      method,
-      headers: { Authorization: app.authorization, "Content-Type": "application/json" },
-      body: value === undefined ? undefined : JSON.stringify(value),
-      signal: AbortSignal.timeout(30000),
-    })
-    if (!response.ok) throw Object.assign(Error("Code runtime unavailable"), { status: response.status })
-    return response
-  }
-  const consoles = async (app: Runtime) =>
-    ((await (await core(app, "GET", "/api/credential")).json()) as { data: FrameworkCredential[] }).data.filter(
-      (item) => item.integrationID === BambuIA.integrationID,
-    )
-  // Each RAD sign-in becomes the runtime's BambuIAFrameWork console. The core plugin renews it from then on, so
-  // the RAD token itself never reaches the runtime.
-  const link = async (app: Runtime) => {
-    const token = app.account.token
-    if (!framework || app.framework.linked === token || app.framework.retry > Date.now()) return
-    const previous = await consoles(app)
-    const response = await fetch(framework + "/auth/exchange", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-      body: JSON.stringify({ consoleName: "BambuTechCode", consoleId: previous.at(-1)?.value.metadata?.consoleID }),
-      redirect: "error",
-      signal: AbortSignal.timeout(15000),
-    })
-    if (!response.ok) throw Object.assign(Error("BambuIAFrameWork unavailable"), { status: response.status })
-    const session = Schema.decodeUnknownSync(BambuIA.Session)(((await response.json()) as { data: unknown }).data)
-    await core(app, "POST", "/api/credential", {
-      integrationID: BambuIA.integrationID,
-      label: session.user.email,
-      value: BambuIA.credential(session),
-    })
-    for (const item of previous) await core(app, "DELETE", "/api/credential/" + item.id)
-    app.framework.linked = token
-  }
-  // One exchange at a time per runtime; a failure waits before the next request tries again.
-  const linked = (app: Runtime) => {
-    app.framework.queue = app.framework.queue
-      .then(() => link(app))
-      .catch(() => {
-        app.framework.retry = Date.now() + 30000
-      })
-    return app.framework.queue
-  }
-  const frameworkState = (app: Runtime | undefined, token: string) => {
-    if (!framework) return "disabled"
-    if (app?.framework.linked === token) return "connected"
-    // The runtime opens on the first API request; until then, or until the next retry, it is still connecting.
-    if (app && app.framework.retry > Date.now()) return "unavailable"
-    return "connecting"
-  }
-  // Signing out of the last RAD session closes the console in the Framework and removes it from the runtime.
-  const unlink = async (userID: number) => {
-    const entry = runtimes.get(userID)
-    if (!framework || !entry) return
-    const app = await entry
-    app.framework.queue = app.framework.queue
-      .then(async () => {
-        for (const item of await consoles(app)) {
-          await fetch(framework + "/auth/logout", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refreshToken: item.value.refresh }),
-            redirect: "error",
-            signal: AbortSignal.timeout(15000),
-          }).catch(() => undefined)
-          await core(app, "DELETE", "/api/credential/" + item.id)
-        }
-        app.framework.linked = undefined
-      })
-      .catch(() => undefined)
-    await app.framework.queue
   }
   const json = (res: ServerResponse, status: number, value: unknown) => {
     res.writeHead(status, { "Content-Type": "application/json" })
@@ -247,7 +166,7 @@ export function createRadGateway(config: RadGatewayConfig) {
         const state = randomUUID()
         challenges.set(state, Date.now() + 300000)
         res.setHeader("Set-Cookie", cookieHeader("rad_challenge", state, 300))
-        json(res, 200, { state, url: radOrigin + "/code-authorize#" + new URLSearchParams({ state, origin }) })
+        json(res, 200, { state })
         return
       }
       if (url.pathname === prefix + "/login" && req.method === "POST") {
@@ -256,13 +175,23 @@ export function createRadGateway(config: RadGatewayConfig) {
         if (
           input.state !== challenge ||
           (challenges.get(challenge) ?? 0) < Date.now() ||
-          typeof input.token !== "string"
+          typeof input.idToken !== "string"
         ) {
           json(res, 401, { error: "LOGIN_REQUIRED" })
           return
         }
         challenges.delete(challenge)
-        const value: Account = { token: input.token, user: await call({ token: input.token })<Identity>("/me") }
+        // The member signs in with their corporate Google account; RAD turns it into their RAD session.
+        const session = await radLogin(authApi, input.idToken).catch((error: { status?: number }) => ({
+          status: error.status ?? 503,
+        }))
+        if ("status" in session) {
+          // RAD answers 404 for a Google account without a RAD member.
+          if (session.status === 404) json(res, 403, { error: "NOT_A_MEMBER" })
+          else json(res, 401, { error: "LOGIN_REQUIRED" })
+          return
+        }
+        const value: Account = { ...session, user: await call(session)<Identity>("/me") }
         await call(value)("/logins", { id: randomUUID() })
         const key = randomUUID() + randomUUID()
         sessions.set(key, value)
@@ -277,8 +206,9 @@ export function createRadGateway(config: RadGatewayConfig) {
         sessions.delete(key)
         for (const socket of sockets.get(key) ?? []) socket.destroy()
         sockets.delete(key)
+        // Signing out of the last RAD session closes the member's Framework console.
         if (ended && !Array.from(sessions.values()).some((item) => item.user.id === ended.user.id))
-          await unlink(ended.user.id)
+          await runtimes.get(ended.user.id)?.then((app) => app.framework.unlink())
         res.setHeader("Set-Cookie", cookieHeader("rad_code", "", 0))
         res.setHeader("Clear-Site-Data", '"cache", "storage"')
         json(res, 200, { loggedOut: true })
@@ -291,7 +221,7 @@ export function createRadGateway(config: RadGatewayConfig) {
           return
         }
         res.setHeader("Content-Type", "text/html; charset=utf-8")
-        res.end(loginPage(radOrigin))
+        res.end(loginPage(config.firebase))
         return
       }
       if (url.pathname === prefix + "/me") {
@@ -299,7 +229,9 @@ export function createRadGateway(config: RadGatewayConfig) {
           app = active ? await active : undefined
         const pending =
           app?.journal.journal.query<{ count: number }, []>("SELECT count(*) count FROM pending").get()?.count ?? 0
-        json(res, 200, { user: auth.value.user, radOrigin, pending, framework: frameworkState(app, auth.value.token) })
+        // The runtime opens on the first API request; until then the Framework is still connecting.
+        const status = app ? app.framework.status(auth.value.token) : framework ? "connecting" : "disabled"
+        json(res, 200, { user: auth.value.user, radOrigin, pending, framework: status })
         return
       }
       if (url.pathname.startsWith("/api/")) {
@@ -418,11 +350,14 @@ export function createRadGateway(config: RadGatewayConfig) {
   }
 }
 
-function loginPage(radOrigin: string) {
-  const encoded = JSON.stringify(radOrigin).replace(/</g, "\\u003c")
-  return `<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BambuTechCode · RAD</title><style>body{margin:0;background:#102b22;color:#edf7ee;font-family:inherit;min-height:100vh;display:grid;place-items:center}main{max-width:520px;margin:30px;padding:40px;border:1px solid #557a62;border-radius:20px;background:#18382b}small{letter-spacing:.15em;color:#b0d98c}h1{font-size:38px;line-height:1.2}p{line-height:1.7;color:#c1d7cb}button{padding:14px 22px;border:0;border-radius:8px;background:#b3e58d;color:#18382b;font:inherit;cursor:pointer}#status{min-height:24px}</style><main><small>BAMBU TECHSERVICES</small><h1>Tu espacio de trabajo, conectado a RAD.</h1><p>Inicia sesión para continuar en BambuTechCode. Tus conversaciones, sesiones y uso de MCP estarán disponibles en Gobernanza según tus permisos.</p><button id="login">Iniciar sesión con RAD</button><p id="status" role="status"></p></main><script>
-  const button=document.getElementById('login'),status=document.getElementById('status');let popup,state;
-  button.onclick=async()=>{popup=window.open('about:blank','rad-code-login');if(!popup){status.textContent='Permite las ventanas emergentes para iniciar sesión.';return}button.disabled=true;status.textContent='Continúa en la ventana de RAD.';try{const response=await fetch('/api/experimental/rad/request',{method:'POST'});if(!response.ok)throw Error();const data=await response.json();state=data.state;popup.location=data.url}catch{status.textContent='No se pudo conectar. Intenta nuevamente.';button.disabled=false}};
-  window.addEventListener('message',async event=>{if(event.origin!==${encoded}||event.source!==popup||event.data?.type!=='rad-code-login'||event.data.state!==state)return;try{const response=await fetch('/api/experimental/rad/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state,token:event.data.token})});if(!response.ok)throw Error();popup.close();location.replace('/')}catch{status.textContent='No se pudo validar la sesión de RAD.';button.disabled=false}});
+// Signs the member in with RAD's Firebase project, the corporate Google sign-in RAD itself uses, and gives the Google
+// ID token to the gateway, which exchanges it with RAD for the member's session.
+function loginPage(firebase: FirebaseConfig) {
+  const encoded = JSON.stringify(firebase).replace(/</g, "\\u003c")
+  return `<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BambuTechCode · RAD</title><style>body{margin:0;background:#102b22;color:#edf7ee;font-family:inherit;min-height:100vh;display:grid;place-items:center}main{max-width:520px;margin:30px;padding:40px;border:1px solid #557a62;border-radius:20px;background:#18382b}small{letter-spacing:.15em;color:#b0d98c}h1{font-size:38px;line-height:1.2}p{line-height:1.7;color:#c1d7cb}button{padding:14px 22px;border:0;border-radius:8px;background:#b3e58d;color:#18382b;font:inherit;cursor:pointer}#status{min-height:24px}</style><main><small>BAMBU TECHSERVICES</small><h1>Tu espacio de trabajo, conectado a RAD.</h1><p>Inicia sesión con tu cuenta corporativa de Google para continuar en BambuTechCode. Tus conversaciones, sesiones y uso de MCP estarán disponibles en Gobernanza según tus permisos.</p><button id="login">Continuar con Google</button><p id="status" role="status"></p></main><script type="module">
+  import{initializeApp}from"https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+  import{getAuth,GoogleAuthProvider,signInWithPopup,signOut}from"https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+  const auth=getAuth(initializeApp(${encoded})),button=document.getElementById('login'),status=document.getElementById('status');
+  button.onclick=async()=>{button.disabled=true;status.textContent='Continúa en la ventana de Google.';try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});const idToken=await(await signInWithPopup(auth,provider)).user.getIdToken();await signOut(auth);const challenge=await fetch('/api/experimental/rad/request',{method:'POST'});if(!challenge.ok)throw Error();const{state}=await challenge.json();const response=await fetch('/api/experimental/rad/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state,idToken})});if(response.status===403){status.textContent='Tu cuenta de Google no está registrada en RAD. Usa tu cuenta corporativa.';button.disabled=false;return}if(!response.ok)throw Error();location.replace('/')}catch(error){status.textContent=error?.code==='auth/popup-blocked'?'Permite las ventanas emergentes para iniciar sesión.':'No se pudo iniciar sesión. Intenta nuevamente.';button.disabled=false}};
   </script></html>`
 }

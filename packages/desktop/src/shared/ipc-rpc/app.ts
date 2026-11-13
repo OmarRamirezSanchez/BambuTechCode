@@ -60,6 +60,22 @@ export const AppSetNativeTranslations = Rpc.make("AppSetNativeTranslations", {
 
 export const AppRelaunch = Rpc.make("AppRelaunch")
 
+export const RadStatus = Schema.Struct({
+  governed: Schema.Boolean,
+  radOrigin: Schema.optional(Schema.String),
+  stage: Schema.Literals(["signed-out", "signing-in", "starting", "ready"]),
+  user: Schema.optional(Schema.Struct({ id: Schema.Number, name: Schema.String, email: Schema.String })),
+  framework: Schema.optional(Schema.String),
+  pending: Schema.Number,
+  expired: Schema.Boolean,
+})
+
+export const AppRadStatus = Rpc.make("AppRadStatus", { success: RadStatus })
+
+export const AppRadOpenLogin = Rpc.make("AppRadOpenLogin")
+
+export const AppRadLogout = Rpc.make("AppRadLogout")
+
 export const AppRpcs = RpcGroup.make(
   AppAwaitInitialization,
   AppReconnectService,
@@ -74,4 +90,7 @@ export const AppRpcs = RpcGroup.make(
   AppRecordFatalRendererError,
   AppSetNativeTranslations,
   AppRelaunch,
+  AppRadStatus,
+  AppRadOpenLogin,
+  AppRadLogout,
 )

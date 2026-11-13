@@ -1,9 +1,26 @@
 import { test, expect } from "bun:test"
-import { createServer } from "node:http"
+import { createServer, type ServerResponse } from "node:http"
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises"
 import path from "node:path"
 import os from "node:os"
 import { createRadGateway } from "../src/rad-gateway"
+
+const firebase = { apiKey: "test-key", authDomain: "rad.example.test", projectId: "rad" }
+
+// RAD's Google sign-in: a Firebase ID token for a member becomes their RAD session; other accounts are not members.
+async function googleLogin(req: AsyncIterable<Buffer | string>, res: ServerResponse) {
+  const chunks: Buffer[] = []
+  for await (const chunk of req) chunks.push(Buffer.from(chunk))
+  const tokenId = (JSON.parse(Buffer.concat(chunks).toString()) as { tokenId: string }).tokenId
+  res.setHeader("Content-Type", "application/json")
+  if (!/^google-[ab]$/.test(tokenId)) {
+    res.writeHead(404)
+    res.end("{}")
+    return
+  }
+  const token = tokenId.replace("google-", "user-")
+  res.end(JSON.stringify({ data: { tokens: { accessToken: token, refreshToken: "refresh-" + token } } }))
+}
 
 test("requires RAD identity for APIs and isolates real core histories across accounts", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "rad-gateway-"))
@@ -11,6 +28,7 @@ test("requires RAD identity for APIs and isolates real core histories across acc
   await mkdir(assets)
   await writeFile(path.join(assets, "index.html"), "authenticated app")
   const upstream = createServer((req, res) => {
+    if (req.url === "/auth/login") return googleLogin(req, res)
     const id = req.headers.authorization === "Bearer user-a" ? 1 : req.headers.authorization === "Bearer user-b" ? 2 : 0
     res.setHeader("Content-Type", "application/json")
     if (!id) {
@@ -37,6 +55,7 @@ test("requires RAD identity for APIs and isolates real core histories across acc
       api: `http://127.0.0.1:${address.port}`,
       data: path.join(directory, "users"),
       assets,
+      firebase,
     })
   await new Promise<void>((resolve) => gateway.server.listen(0, "127.0.0.1", resolve))
   const bound = gateway.server.address()
@@ -52,7 +71,7 @@ test("requires RAD identity for APIs and isolates real core histories across acc
     const data = await challenge.json()
     const response = await call("/api/experimental/rad/login", "POST", `rad_challenge=${data.state}`, {
       state: data.state,
-      token,
+      idToken: token.replace("user-", "google-"),
     })
     expect(response.status).toBe(200)
     expect(response.headers.get("Set-Cookie")).toContain("HttpOnly")
@@ -63,6 +82,14 @@ test("requires RAD identity for APIs and isolates real core histories across acc
   }
   try {
     expect((await call("/api/session")).status).toBe(401)
+    // A Google account without a RAD member cannot open a session.
+    const outsider = (await (await call("/api/experimental/rad/request", "POST")).json()).state
+    const refused = await call("/api/experimental/rad/login", "POST", `rad_challenge=${outsider}`, {
+      state: outsider,
+      idToken: "google-x",
+    })
+    expect(refused.status).toBe(403)
+    expect(await refused.json()).toEqual({ error: "NOT_A_MEMBER" })
     const cookieA = await login("user-a")
     const created = await call("/api/session", "POST", cookieA, { title: "Only user A", location: { directory } })
     expect(created.status).toBe(200)
@@ -93,6 +120,7 @@ test("connects each RAD sign-in to BambuIAFrameWork and closes its console on si
     return `http://127.0.0.1:${address.port}`
   }
   const rad = createServer((req, res) => {
+    if (req.url === "/auth/login") return googleLogin(req, res)
     res.setHeader("Content-Type", "application/json")
     if (req.headers.authorization !== "Bearer user-a") {
       res.writeHead(401)
@@ -163,6 +191,7 @@ test("connects each RAD sign-in to BambuIAFrameWork and closes its console on si
       api: radOrigin,
       data: path.join(directory, "users"),
       assets,
+      firebase,
     })
   const bound = await listen(gateway.server)
   const call = (endpoint: string, method = "GET", cookie = "", body?: unknown) =>
@@ -175,7 +204,7 @@ test("connects each RAD sign-in to BambuIAFrameWork and closes its console on si
     const challenge = await (await call("/api/experimental/rad/request", "POST")).json()
     const response = await call("/api/experimental/rad/login", "POST", `rad_challenge=${challenge.state}`, {
       state: challenge.state,
-      token: "user-a",
+      idToken: "google-a",
     })
     return response.headers
       .getSetCookie()

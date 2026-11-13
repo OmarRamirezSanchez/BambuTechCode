@@ -28,6 +28,23 @@ export function createDesktopPlatform(api: ElectronAPI, windowState: DesktopWind
     setForceFocus: (enabled) => api.setForceFocus(enabled),
     recordFatalRendererError: (error) => api.recordFatalRendererError(error),
     restart: async () => api.relaunch(),
+    rad: {
+      // Ungoverned builds report no member, so the RAD account menu stays hidden.
+      status: async () => {
+        const status = await api.radStatus()
+
+        return {
+          governed: status.governed,
+          name: status.user?.name,
+          email: status.user?.email,
+          radOrigin: status.radOrigin,
+          framework: status.framework,
+          pending: status.pending,
+          error: status.expired,
+        }
+      },
+      logout: () => api.radLogout(),
+    },
     notify: createDesktopNotify(api),
     fetch: (input, init) => {
       if (input instanceof Request) return fetch(input)

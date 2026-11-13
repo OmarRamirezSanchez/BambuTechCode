@@ -48,6 +48,11 @@ export const registerIntegrationPolicy = Effect.fn(function* (input: {
         transform: () => Effect.succeed({ dispose: Effect.void }),
         reload: () => Effect.void,
       },
+      integration: {
+        ...host().integration,
+        transform: () => Effect.succeed({ dispose: Effect.void }),
+        reload: () => Effect.void,
+      },
       mcp: {
         list: () => Effect.die("unused mcp.list"),
         transform: (callback) => input.mcp?.transform(callback) ?? Effect.succeed({ dispose: Effect.void }),

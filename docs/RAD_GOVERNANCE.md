@@ -1,6 +1,6 @@
 # BambuTechCode con RAD
 
-La entrada autenticada exige una cuenta activa de RAD antes de servir la interfaz, las APIs, los eventos o los WebSockets. Usa el inicio de sesión existente de RAD; no necesita otro proveedor de identidad.
+La entrada autenticada exige una cuenta activa de RAD antes de servir la interfaz, las APIs, los eventos o los WebSockets. La persona inicia sesión con su cuenta corporativa de Google en la página de BambuTechCode. La página usa el mismo proyecto de Firebase que RAD, y RAD canjea el token de Google por la sesión de la persona registrada (`POST /auth/login`). No se usa otro proveedor de identidad.
 
 ## Inicio local
 
@@ -19,16 +19,22 @@ En otra terminal:
 $env:RAD_CODE_ORIGIN='http://localhost:4332'
 $env:RAD_WEB_ORIGIN='http://localhost:4318'
 $env:RAD_USAGE_API='http://127.0.0.1:4324/api/projects/usage'
+$env:RAD_FIREBASE_CONFIG='{"apiKey":"…","authDomain":"bambumobilerad.firebaseapp.com","projectId":"bambumobilerad"}'
 $env:RAD_CODE_DATA='C:\Users\reckn\Documents\GitHub\RAD\.local\bambutechcode-governance'
 $env:RAD_CODE_VITE='http://127.0.0.1:4445'
 bun run dev:rad
 ```
 
-Abre **http://localhost:4332** y pulsa **Iniciar sesión con RAD**. La autorización vuelve mediante `postMessage` con origen y ventana comprobados y un desafío de un solo uso ligado a una cookie. El JWT no viaja en URLs, no se guarda en el navegador de BambuTechCode y no aparece en logs. La cookie de aplicación es HttpOnly y SameSite=Strict; en HTTPS también es Secure.
+Abre **http://localhost:4332** y pulsa **Continuar con Google**. La página obtiene el token de Google en una ventana emergente de Firebase y cierra esa sesión de Firebase. El gateway canjea el token en RAD, con un desafío de un solo uso ligado a una cookie.
 
-La configuración local de RAD permite expresamente localhost y 127.0.0.1 en el puerto 4332. Usa el mismo hostname del origen configurado. Un despliegue HTTPS requiere autorizar su origen exacto en RAD.
+- **Cuentas aceptadas.** Una cuenta que RAD no reconoce recibe `NOT_A_MEMBER`.
+- **Tokens.** Los tokens no viajan en URLs, no se guardan en el navegador de BambuTechCode y no aparecen en logs.
+- **Renovación.** El gateway renueva el token de acceso con el refresh token de RAD.
+- **Cookie.** Es HttpOnly y SameSite=Strict; en HTTPS también es Secure.
 
-El menú RAD muestra la cuenta, acceso al historial y cierre de sesión. Un estado de sincronización pendiente indica que todavía hay información por enviar. Cada cuenta y ambiente utiliza una base de conversaciones y configuración separada. Las conversaciones antiguas del modo sin autenticación no se importan ni se atribuyen automáticamente.
+`RAD_FIREBASE_CONFIG` es la configuración web pública del proyecto de Firebase de RAD, la misma que usa el frontend de RAD. `RAD_API_URL` es opcional: por defecto es `RAD_USAGE_API` sin `/projects/usage`. Firebase admite `localhost` como dominio autorizado. Un despliegue HTTPS requiere agregar su dominio a los dominios autorizados del proyecto de Firebase.
+
+**Ajustes → RAD session** muestra quién inició sesión, el ambiente de RAD, el estado de BambuIAFrameWork y el historial pendiente, y permite cerrar la sesión. El menú RAD de la esquina ofrece lo mismo de forma abreviada. Un estado de sincronización pendiente indica que todavía hay información por enviar. Cada cuenta y ambiente utiliza una base de conversaciones y configuración separada. Las conversaciones antiguas del modo sin autenticación no se importan ni se atribuyen automáticamente.
 
 ## Modelos a través de BambuIAFrameWork
 
@@ -51,11 +57,24 @@ La sesión renovable dura como máximo `REFRESH_TTL_SECONDS` del Framework (12 h
 
 Los modelos se habilitan, se asignan por rol o persona y se auditan en RAD, en **Gobernanza IA → Modelos IA** y **Consumo IA**. Para probar todo en local sin Dev ni AWS (RAD local, Framework con Bedrock simulado y esta entrada), ver `docs/E2E_GOBERNANZA_IA_LOCAL.md` en el espacio de trabajo de RAD.
 
+## Aplicación de escritorio
+
+Una compilación de escritorio es gobernada cuando se compila con `RAD_WEB_ORIGIN`, `RAD_USAGE_API` y `RAD_FIREBASE_CONFIG`, más `BAMBU_IA_ORIGIN` y opcionalmente `RAD_API_URL`. Sin esas variables, la aplicación funciona como antes.
+
+- **Inicio de sesión.** Al abrir, la aplicación sirve su página de inicio de sesión en `http://localhost:<puerto>` y la abre en el navegador del sistema, porque Google no permite iniciar sesión dentro de aplicaciones embebidas. El proceso principal canjea el token de Google en RAD.
+- **Sesión guardada.** Se guarda cifrada con el almacén de credenciales del sistema operativo (`safeStorage`).
+- **Servicio por cuenta.** La aplicación no usa el servicio local compartido con la CLI y la TUI. Inicia `opencode-cli rad` para la cuenta, con historial y configuración propios en `<userData>/rad`. Ese proceso recibe la sesión por stdin (las herramientas no la heredan), enlaza BambuIAFrameWork, sincroniza el historial con RAD y renueva el token.
+- **Cierre de sesión.** Desde **Ajustes → RAD session** se copian los pendientes, se cierra la consola del Framework y la aplicación vuelve a la página de inicio de sesión.
+
+## Solo BambuIAFrameWork
+
+La política `provider.use` también quita del registro de integraciones los proveedores denegados. Con la política del runtime gobernado (`*` denegado y `bambu-ia` permitido), ni Ajustes, ni el diálogo para conectar proveedores, ni el selector de modelos muestran otros proveedores. Los servidores MCP siguen la política `integration.use`. Una integración que entrega un documento de configuración cargado conserva su lugar.
+
 ## Historial
 
 El backend central conserva mensajes visibles de usuario/asistente, sesiones, categorías, proyectos asociados, accesos y metadatos de herramientas MCP. La categoría inicial se calcula con reglas conservadoras y puede corregirse en RAD. La asociación a un proyecto también se puede realizar desde el detalle de la sesión en Gobernanza.
 
-Los cambios se capturan en el servidor mediante eventos, aunque se cierre la pestaña. La cola local conserva identificadores pendientes y hashes; reintenta al recuperar conexión. Si la credencial RAD vence, se requiere iniciar sesión de nuevo para continuar sincronizando. El cierre de sesión revoca la cookie y cierra conexiones activas; no borra el historial central.
+Los cambios se capturan en el servidor mediante eventos, aunque se cierre la pestaña. La cola local conserva identificadores pendientes y hashes; reintenta al recuperar conexión. Si RAD rechaza también el refresh token, se requiere iniciar sesión de nuevo para continuar sincronizando. El cierre de sesión revoca la cookie y cierra conexiones activas; no borra el historial central.
 
 La entrada está pensada para la aplicación web local. Las herramientas de desarrollo y CLI originales siguen existiendo; para uso gobernado deben conectarse a una entrada autorizada. No publicar el Vite de desarrollo ni los puertos de los runtimes internos.
 

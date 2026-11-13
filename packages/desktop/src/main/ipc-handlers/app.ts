@@ -12,6 +12,7 @@ import { setNativeTranslations } from "../native/translations"
 import { IpcPortHandoff } from "../ipc-transport"
 import { ApplicationLifecycle } from "../lifecycle"
 import { finishFirstLaunchOnboarding, isFirstLaunchOnboardingPending } from "../lifecycle/onboarding"
+import { Rad } from "../rad"
 import { BackgroundService } from "../service/background-service"
 import { DesktopCli } from "../service/desktop-cli"
 import { SidecarCredentials } from "../service/sidecar-credentials"
@@ -68,6 +69,10 @@ export const appHandlers = AppRpcs.toLayer(
           })
         }),
       AppRelaunch: () => Effect.sync(lifecycle.relaunch),
+      AppRadStatus: () => Effect.sync(Rad.status),
+      AppRadOpenLogin: () => Effect.sync(Rad.openLogin),
+      // Restarting returns a governed build to its RAD sign-in.
+      AppRadLogout: () => Effect.promise(Rad.logout).pipe(Effect.andThen(Effect.sync(lifecycle.relaunch))),
     })
   }),
 )

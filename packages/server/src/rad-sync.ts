@@ -3,6 +3,21 @@ import { Database } from "bun:sqlite"
 
 export type RadCall = <T>(path: string, body?: unknown) => Promise<T>
 export type CoreCall = <T>(path: string) => Promise<T>
+
+/** Calls RAD's usage API as the member who owns `token`. */
+export const radCall =
+  (api: string, token: string): RadCall =>
+  async <T>(endpoint: string, body?: unknown) => {
+    const response = await fetch(api + endpoint, {
+      method: body === undefined ? "GET" : "POST",
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      redirect: "error",
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!response.ok) throw Object.assign(Error("RAD unavailable"), { status: response.status })
+    return ((await response.json()) as { data: T }).data
+  }
 type Message = {
   id: string
   type: string

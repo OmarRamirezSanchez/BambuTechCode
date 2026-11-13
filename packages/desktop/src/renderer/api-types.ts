@@ -1,6 +1,7 @@
 import type { DesktopMenuAction, DesktopZoomLevel } from "@opencode/app/desktop-menu"
 import type { DesktopNativeBundle } from "@opencode/app/i18n/desktop-native"
 import type { WindowBootstrap } from "../shared/window-bootstrap"
+import type { RadStatus as RadStatusSchema } from "../shared/ipc-rpc/app"
 import type {
   ClipboardImage,
   DirectoryPickerOptions,
@@ -11,6 +12,8 @@ import type {
   ServerReadyData,
   TitlebarTheme,
 } from "../shared/ipc-contract"
+
+export type RadStatus = typeof RadStatusSchema.Type
 
 export type ElectronAPI = {
   awaitInitialization(): Promise<ServerReadyData>
@@ -57,6 +60,9 @@ export type ElectronAPI = {
   setWindowFocus(): Promise<void>
   showWindow(): Promise<void>
   relaunch(): void
+  radStatus(): Promise<RadStatus>
+  radOpenLogin(): Promise<void>
+  radLogout(): Promise<void>
   getZoomFactor(): Promise<number>
   setZoomFactor(factor: number): Promise<void>
   getPinchZoomEnabled(): Promise<boolean>

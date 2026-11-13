@@ -55,6 +55,12 @@ export default defineConfig(async ({ command }) => {
       define: {
         // Local renderer/server mode still uses the dev application identity and updater policy.
         "import.meta.env.OPENCODE_CHANNEL": JSON.stringify(channel === "local" ? "dev" : channel),
+        // Setting the RAD origins at build time makes a governed build: RAD sign-in and BambuIAFrameWork models.
+        "import.meta.env.RAD_WEB_ORIGIN": JSON.stringify(process.env.RAD_WEB_ORIGIN ?? ""),
+        "import.meta.env.RAD_API_URL": JSON.stringify(process.env.RAD_API_URL ?? ""),
+        "import.meta.env.RAD_USAGE_API": JSON.stringify(process.env.RAD_USAGE_API ?? ""),
+        "import.meta.env.RAD_FIREBASE_CONFIG": JSON.stringify(process.env.RAD_FIREBASE_CONFIG ?? ""),
+        "import.meta.env.BAMBU_IA_ORIGIN": JSON.stringify(process.env.BAMBU_IA_ORIGIN ?? ""),
       },
       build: {
         minify: command === "build",
