@@ -7,11 +7,11 @@ import type { AddressInfo } from "node:net"
 import path from "node:path"
 import { createInterface } from "node:readline"
 import { Option, Schema } from "effect"
+import { radSignInPage } from "@opencode/ui/rad-sign-in"
 import { app, safeStorage, shell } from "electron"
 import type { SidecarCredentials } from "../service/sidecar-credentials"
 import { RAD_SESSION_KEY } from "../storage/keys"
 import { getStore } from "../storage/store"
-import { loginPage } from "./login-page"
 
 const web = import.meta.env.RAD_WEB_ORIGIN
 
@@ -141,7 +141,7 @@ function signIn() {
 
       if (req.method === "GET" && req.url === "/") {
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Referrer-Policy": "no-referrer" })
-        res.end(loginPage({ firebase: JSON.parse(firebase ?? "{}"), state: nonce }))
+        res.end(radSignInPage({ firebase: JSON.parse(firebase ?? "{}"), mode: { type: "desktop", state: nonce } }))
 
         return
       }

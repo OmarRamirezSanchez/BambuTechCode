@@ -101,6 +101,7 @@
     "./fonts/*": "./src/assets/fonts/*",
     "./audio/*": "./src/assets/audio/*",
     "./brand": "./src/brand.ts",
+    "./rad-sign-in": "./src/rad-sign-in.ts",
     "./brand-icon.png": "./src/assets/favicon/web-app-manifest-192x192.png"
   },
   "scripts": {

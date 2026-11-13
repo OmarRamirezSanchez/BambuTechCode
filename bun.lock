@@ -654,6 +654,7 @@
         "@opencode/protocol": "workspace:*",
         "@opencode/schema": "workspace:*",
         "@opencode/simulation": "workspace:*",
+        "@opencode/ui": "workspace:*",
         "@opencode/util": "workspace:*",
         "effect": "catalog:",
       },
