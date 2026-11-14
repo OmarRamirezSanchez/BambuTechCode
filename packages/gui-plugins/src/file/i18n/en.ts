@@ -13,6 +13,7 @@ export default {
   "view.download": "Download",
   "view.reveal": "Reveal in {{app}}",
   "view.openInBrowser": "Open in browser",
+  "view.openInSystemBrowser": "Open in system browser",
   "view.fullscreen": "Enter full screen",
   "view.binary": "Binary file · {{size}}",
   "view.loadFailed": "Couldn't load this file.",

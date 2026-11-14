@@ -93,3 +93,11 @@ export function artifactKind(path: string): ArtifactKind {
   if (mime.startsWith("font/")) return "font"
   return officeKinds.get(mime) ?? "video"
 }
+
+/** Kinds an agent produces for the user to look at: pages, diagrams, documents and images. */
+const agentKinds = new Set<ArtifactKind>(["html", "svg", "markdown", "mermaid", "image", "pdf"])
+
+/** Whether a file an agent writes is an artifact the app offers to show rendered beside the conversation. */
+export function isAgentArtifact(path: string) {
+  return agentKinds.has(artifactKind(path))
+}

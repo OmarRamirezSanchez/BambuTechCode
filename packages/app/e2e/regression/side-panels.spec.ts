@@ -350,3 +350,66 @@ test("the new tab view lists recently closed tabs, expands to the rest, and keep
   await expect(rows.first()).toContainText("closed-00.ts")
   await expect(recent).not.toContainText("README.md")
 })
+
+test("an artifact the agent wrote opens rendered beside the conversation, from the Artifacts tab and from its row", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const created = 1_700_000_000_000
+
+  const write = (id: string, path: string) => ({
+    type: "tool" as const,
+    id,
+    name: "write",
+    state: {
+      status: "completed" as const,
+      input: { path, content: "draft" },
+      content: [{ type: "text" as const, text: "Created file" }] as const,
+    },
+    time: { created, completed: created + 1 },
+  })
+
+  await openSession(page, {
+    name: "Artifacts",
+    seed: { panes: { ses_artifacts: { review: true } } },
+    pageMessages: () => ({
+      items: [
+        { id: "msg_artifacts_user", type: "user", text: "Write the quarterly report", time: { created } },
+        {
+          id: "msg_artifacts_assistant",
+          type: "assistant",
+          agent: "build",
+          model: { id: "model", providerID: "provider" },
+          content: [write("call_report", "report.html"), write("call_code", "src/app.ts")],
+          time: { created: created + 1, completed: created + 2 },
+        },
+      ],
+    }),
+    fileContent: (path) =>
+      path === "report.html" ? { type: "text", content: "<!doctype html><h1>Quarterly report</h1>" } : undefined,
+  })
+
+  const panel = page.locator("#review-panel")
+  const report = panel.getByRole("tab", { name: "report.html", exact: true })
+  const frame = panel.locator('iframe[title="report.html"]')
+
+  // The Artifacts tab lists what the agent wrote that renders as a page, not the source file it also wrote.
+  await panel.getByRole("button", { name: /^Artifacts/ }).click()
+  const list = panel.getByRole("list", { name: "Artifacts in this session", exact: true })
+  await expect(list.getByRole("listitem")).toHaveCount(1)
+  await list.getByRole("button", { name: "report.html", exact: true }).click()
+  await expect(report).toHaveAttribute("aria-selected", "true")
+  // The page runs as an opaque origin: no app storage, cookies or credentials reach it.
+  await expect(frame).toHaveAttribute("sandbox", "allow-scripts allow-popups allow-forms allow-modals")
+  await expect(frame.contentFrame().getByRole("heading", { name: "Quarterly report", exact: true })).toBeVisible()
+
+  // The timeline offers the same on the artifact's row only.
+  await report.locator("..").getByRole("button", { name: "Close tab" }).click()
+  await expect(report).toHaveCount(0)
+  await page.getByRole("button", { name: /^Used 2 / }).click()
+  const open = page.getByRole("button", { name: "Open in panel", exact: true })
+  await expect(open).toHaveCount(1)
+  await open.click()
+  await expect(report).toHaveAttribute("aria-selected", "true")
+  await expect(frame.contentFrame().getByRole("heading", { name: "Quarterly report", exact: true })).toBeVisible()
+})

@@ -1613,6 +1613,33 @@
     justify-content: flex-end;
   }
 
+  /* Opens an artifact in the side panel; a button inside the header's own button, so it keeps its own hover. */
+  [data-slot="apply-patch-open"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--v2-icon-icon-muted);
+    cursor: pointer;
+
+    @media (hover: hover) {
+      &:hover {
+        color: var(--v2-text-text-base);
+        background: var(--v2-overlay-simple-overlay-hover);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--v2-border-border-focus);
+      outline-offset: -2px;
+    }
+  }
+
   [data-slot="apply-patch-change"] {
     font-family: var(--font-family-sans);
     font-size: var(--font-size-small);

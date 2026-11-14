@@ -330,6 +330,7 @@ const source = {
   "ui.patch.action.created": "Created",
   "ui.patch.action.moved": "Moved",
   "ui.patch.action.patched": "Patched",
+  "ui.patch.action.openInPanel": "Open in panel",
 
   "ui.question.subtitle.answered": "{{count}} answered",
   "ui.question.answer.none": "(no answer)",

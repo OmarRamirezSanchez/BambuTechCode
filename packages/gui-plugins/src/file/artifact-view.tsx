@@ -29,6 +29,10 @@ import { createKeyed, usePlugin, type FileContent, type MountedSession, type Ses
 import { blobUrlFromContent, bytesFromContent, contentBytes, parseDelimited, resolveArtifactPath } from "./artifact"
 import { FileViewer } from "@opencode/plugin/gui/file"
 import { ArtifactToolbar } from "./artifact-toolbar"
+import type File from "./index"
+
+/** Kinds the system browser opens; `system-browser.ts` owns how, and loads only when the user asks. */
+const systemBrowserKinds: readonly ArtifactKind[] = ["html", "markdown", "svg", "image", "pdf"]
 
 type ArtifactMode = "preview" | "source"
 
@@ -74,7 +78,7 @@ export default function ArtifactView(props: {
   cacheKey?: string
   source: JSX.Element
 }) {
-  const ctx = usePlugin()
+  const ctx = usePlugin<typeof File>()
   const locale = ctx.locale
   // Media the browser could not decode falls back to the binary placeholder.
   const initial: ViewerState = { mode: "preview", info: {}, undecodable: false }
@@ -130,6 +134,21 @@ export default function ArtifactView(props: {
 
   const size = () => formatBytes(locale.locale(), contentBytes(props.content))
 
+  // Opens the content on screen, so the browser shows what the view shows.
+  const systemBrowser = () => {
+    const value = kind()
+
+    if (value === "binary" || !systemBrowserKinds.includes(value)) return undefined
+    const input = { session: props.session, root: props.screen.file.root, path: props.path, kind: value }
+
+    return () =>
+      void import("./system-browser")
+        .then((module) => module.openInSystemBrowser(ctx, { ...input, content: props.content }))
+        .catch(() => {
+          if (!ctx.signal.aborted) showToast({ variant: "error", title: ctx.t("common.requestFailed") })
+        })
+  }
+
   // A kind the file view does not render itself goes to the first plugin viewer that lists it.
   const viewer = createMemo(() => {
     const value = kind()
@@ -176,6 +195,7 @@ export default function ArtifactView(props: {
         onModeChange={previewable() ? (mode) => change({ mode }) : undefined}
         meta={meta()}
         html={kind() === "html"}
+        onOpenInSystemBrowser={systemBrowser()}
       />
       <Show when={!previewable() || state().mode === "preview"} fallback={props.source}>
         <Switch fallback={<ArtifactBinary path={props.path} size={size()} reason={state().reason} />}>
