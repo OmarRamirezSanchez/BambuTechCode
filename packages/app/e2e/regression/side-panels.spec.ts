@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test"
 import { tabKey } from "../utils/app"
 import { fileDiff, openSession } from "../utils/workspace"
 import { openReviewLauncher } from "../utils/side-panel"
+import { assistantMessage, partUpdated, setupTimeline, toolPart, userMessage } from "../utils/timeline"
 import { expectSessionTitle } from "../utils/waits"
 import { base64Encode } from "@opencode/util/encode"
 
@@ -412,4 +413,37 @@ test("an artifact the agent wrote opens rendered beside the conversation, from t
   await open.click()
   await expect(report).toHaveAttribute("aria-selected", "true")
   await expect(frame.contentFrame().getByRole("heading", { name: "Quarterly report", exact: true })).toBeVisible()
+})
+
+test("an open artifact outside the workspace reloads when the agent changes it again", async ({ page }) => {
+  // No server watch covers a file outside the workspace, so the agent's next change to it is what reloads it.
+  const path = "C:/OpenCode/Outside/report.html"
+  const file = { content: "<!doctype html><h1>First draft</h1>" }
+
+  const view = await setupTimeline(page, {
+    messages: [
+      userMessage(),
+      assistantMessage([toolPart("prt_report_write", "write", "completed", { path, content: "draft" })]),
+    ],
+    settings: { editToolPartsExpanded: true },
+    fileContent: (name) => (name === "report.html" ? { type: "text", content: file.content } : undefined),
+  })
+
+  const frame = page.locator('#review-panel iframe[title="report.html"]').contentFrame()
+  await page.getByRole("button", { name: "Open in panel", exact: true }).click()
+  await expect(frame.getByRole("heading", { name: "First draft", exact: true })).toBeVisible()
+
+  file.content = "<!doctype html><h1>Final report</h1>"
+  await view.send(
+    partUpdated(
+      toolPart(
+        "prt_report_edit",
+        "edit",
+        "completed",
+        { path },
+        { metadata: { files: [{ file: path, status: "modified", additions: 1, deletions: 1, patch: "" }] } },
+      ),
+    ),
+  )
+  await expect(frame.getByRole("heading", { name: "Final report", exact: true })).toBeVisible()
 })

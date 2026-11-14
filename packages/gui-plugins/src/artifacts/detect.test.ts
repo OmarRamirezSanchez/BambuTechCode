@@ -16,7 +16,9 @@ const tool = (call: Call, index: number): SessionMessageAssistantTool => {
     name: call.name,
     time: { created: index, completed: index },
   }
+
   const input = call.input ?? {}
+
   const metadata = call.files
     ? { files: call.files.map((file) => ({ ...file, patch: "", additions: 1, deletions: 0 })) }
     : undefined
