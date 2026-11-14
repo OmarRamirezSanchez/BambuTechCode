@@ -2467,8 +2467,8 @@ ToolRegistry.register({
               defer={props.deferContent !== false}
               actions={
                 <Show when={!pending()}>
-                  <OpenArtifactButton path={path()} />
                   <Show when={diff()}>{(diff) => <DiffChanges appearance="standard" changes={diff()} />}</Show>
+                  <OpenArtifactButton path={path()} />
                 </Show>
               }
             >
@@ -2623,16 +2623,6 @@ ToolRegistry.register({
                           </div>
                         </div>
                         <div data-slot="apply-patch-trigger-actions">
-                          <Show
-                            when={
-                              !props.pendingFiles &&
-                              props.status !== "running" &&
-                              props.status !== "streaming" &&
-                              file().type !== "delete"
-                            }
-                          >
-                            <OpenArtifactButton path={file().path} />
-                          </Show>
                           <Switch>
                             <Match when={file().type === "add"}>
                               <span data-slot="apply-patch-change" data-type="added">
@@ -2651,6 +2641,17 @@ ToolRegistry.register({
                               />
                             </Match>
                           </Switch>
+                          {/* Beside the chevron, so the buttons line up whatever the change counts' width. */}
+                          <Show
+                            when={
+                              !props.pendingFiles &&
+                              props.status !== "running" &&
+                              props.status !== "streaming" &&
+                              file().type !== "delete"
+                            }
+                          >
+                            <OpenArtifactButton path={file().path} />
+                          </Show>
                           <Icon name="chevron-grabber-vertical" size="small" />
                         </div>
                       </div>
