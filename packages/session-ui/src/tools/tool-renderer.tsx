@@ -34,6 +34,7 @@ import { createMarkdownImages } from "../components/markdown-image"
 import { createImagePreview } from "../components/image-preview"
 import { useMarkdown } from "../context/markdown"
 import { getDirectory, getFilename } from "@opencode/util/path"
+import { isAgentArtifact } from "@opencode/util/artifact"
 import { checksum } from "@opencode/util/encode"
 import { Tooltip } from "@opencode/ui/tooltip"
 import { useDialog } from "@opencode/ui/context/dialog"
@@ -1274,6 +1275,35 @@ function FileAccordionItem(props: {
   )
 }
 
+/**
+ * Opens an artifact the agent wrote in the side panel. It sits in a file row's header, whose button toggles the diff,
+ * so the click stays here.
+ */
+function OpenArtifactButton(props: { path: string }) {
+  const data = useData()
+  const i18n = useI18n()
+
+  return (
+    <Show when={isAgentArtifact(props.path) ? data.openFile : undefined}>
+      {(open) => (
+        <Tooltip appearance="standard" value={i18n.t("ui.patch.action.openInPanel")} placement="top" gutter={4}>
+          <button
+            type="button"
+            data-slot="apply-patch-open"
+            aria-label={i18n.t("ui.patch.action.openInPanel")}
+            onClick={(event) => {
+              event.stopPropagation()
+              open()(props.path)
+            }}
+          >
+            <Icon name="layout-right" size="small" />
+          </button>
+        </Tooltip>
+      )}
+    </Show>
+  )
+}
+
 function ToolFileAccordion(props: {
   path: string
   actions?: JSX.Element
@@ -2436,8 +2466,9 @@ ToolRegistry.register({
               forceOpen={props.forceOpen}
               defer={props.deferContent !== false}
               actions={
-                <Show when={!pending() ? diff() : undefined}>
-                  {(diff) => <DiffChanges appearance="standard" changes={diff()} />}
+                <Show when={!pending()}>
+                  <Show when={diff()}>{(diff) => <DiffChanges appearance="standard" changes={diff()} />}</Show>
+                  <OpenArtifactButton path={path()} />
                 </Show>
               }
             >
@@ -2466,6 +2497,7 @@ ToolRegistry.register({
     const path = createMemo(() => toolInput(props.input).path ?? "")
     const content = createMemo(() => toolInput(props.input).content ?? "")
     const diagnostics = createMemo(() => getDiagnostics(toolMetadata(props.metadata).diagnostics, path()))
+    const pending = () => props.status === "streaming" || props.status === "running"
 
     return (
       <div data-component="write-tool">
@@ -2477,6 +2509,11 @@ ToolRegistry.register({
             onOpenChange={props.onOpenChange}
             forceOpen={props.forceOpen}
             defer={props.deferContent !== false}
+            actions={
+              <Show when={!pending()}>
+                <OpenArtifactButton path={path()} />
+              </Show>
+            }
           >
             <div data-component="write-content">
               <Dynamic
@@ -2604,6 +2641,17 @@ ToolRegistry.register({
                               />
                             </Match>
                           </Switch>
+                          {/* Beside the chevron, so the buttons line up whatever the change counts' width. */}
+                          <Show
+                            when={
+                              !props.pendingFiles &&
+                              props.status !== "running" &&
+                              props.status !== "streaming" &&
+                              file().type !== "delete"
+                            }
+                          >
+                            <OpenArtifactButton path={file().path} />
+                          </Show>
                           <Icon name="chevron-grabber-vertical" size="small" />
                         </div>
                       </div>

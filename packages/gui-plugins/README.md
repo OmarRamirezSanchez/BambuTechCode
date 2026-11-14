@@ -694,7 +694,7 @@ export const builtins = compose({
   btw,
   debug: { ...debug, mainEntry: () => import("./debug/main") },
   terminal,
-  file,
+  file: { ...file, mainEntry: () => import("./file/main") },
   review,
   details,
   browser: { ...browser, mainEntry: () => import("./browser/main") },
@@ -705,6 +705,7 @@ export const builtins = compose({
   "microsoft-office": microsoftOffice,
   sources,
   goal,
+  artifacts,
 })
 ```
 
@@ -730,6 +731,7 @@ export const builtins = compose({
   "microsoft-office": { ...microsoftOffice, windowEntry: eager(microsoftOfficeRenderer) },
   sources: { ...sources, windowEntry: eager(sourcesRenderer) },
   goal: { ...goal, windowEntry: eager(goalRenderer) },
+  artifacts: { ...artifacts, windowEntry: eager(artifactsRenderer) },
 })
 ```
 

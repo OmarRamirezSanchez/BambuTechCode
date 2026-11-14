@@ -14,6 +14,7 @@ import wsl from "./wsl"
 import microsoftOffice from "./microsoft-office"
 import sources from "./sources"
 import goal from "./goal"
+import artifacts from "./artifacts"
 
 /** Built-in plugins with their main entries, by id. Lists every built-in so their ids stay reserved. */
 export const builtins = compose({
@@ -21,7 +22,7 @@ export const builtins = compose({
   btw,
   debug: { ...debug, mainEntry: () => import("./debug/main") },
   terminal,
-  file,
+  file: { ...file, mainEntry: () => import("./file/main") },
   review,
   details,
   browser: { ...browser, mainEntry: () => import("./browser/main") },
@@ -32,4 +33,5 @@ export const builtins = compose({
   "microsoft-office": microsoftOffice,
   sources,
   goal,
+  artifacts,
 })

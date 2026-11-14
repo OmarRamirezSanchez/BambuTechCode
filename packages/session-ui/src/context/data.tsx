@@ -70,6 +70,11 @@ export const { use: useData, provider: DataProvider } = createSimpleContext({
     peekMedia?: PeekMediaUrlFn
     onNavigateToSession?: NavigateToSessionFn
     onSessionHref?: SessionHrefFn
+    /**
+     * Opens a file the session's agent wrote in the side panel, rendered. File change rows offer it for agent artifacts
+     * (`isAgentArtifact`); without it they offer nothing.
+     */
+    onOpenFile?: (path: string) => void
     /** Whether `experimental.background_compaction` is on for this location; automatic compactions then show quietly. */
     backgroundCompaction?: boolean
   }) => {
@@ -91,6 +96,7 @@ export const { use: useData, provider: DataProvider } = createSimpleContext({
       },
       navigateToSession: props.onNavigateToSession,
       sessionHref: props.onSessionHref,
+      openFile: props.onOpenFile,
       shellRunning: props.shellRunning,
       shellOutput: props.shellOutput,
       turnDiff: props.turnDiff,

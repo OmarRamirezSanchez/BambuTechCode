@@ -20,6 +20,8 @@ export function SessionUIProvider(
   props: ParentProps<{
     directory: string
     server: ServerConnection.Key
+    /** Opens a file the agent wrote in the side panel; file change rows offer it for agent artifacts. */
+    onOpenFile?: (path: string) => void
   }>,
 ) {
   const navigate = useNavigate()
@@ -144,6 +146,7 @@ export function SessionUIProvider(
         }}
         onNavigateToSession={navigateToSession}
         onSessionHref={href}
+        onOpenFile={props.onOpenFile}
         backgroundCompaction={backgroundCompaction()}
       >
         <MarkdownProvider readImage={readImage()} openSession={openReferencedSession} sessionTitle={sessionTitle}>

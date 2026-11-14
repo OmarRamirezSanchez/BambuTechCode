@@ -18,6 +18,8 @@ import { useNotification } from "@/shell/notifications/notification"
 import { ComposerPersistenceProvider } from "@/composer/persistence"
 import { useData, useServer } from "@/runtime/server/current"
 import { ServerConnection } from "@/runtime/server/registry"
+import { usePluginAttachment } from "@/runtime/plugin/attachment"
+import { usePluginHost } from "@/runtime/plugin/host"
 import { useSettingsCommand } from "@/settings/command"
 import { useSettings } from "@/settings/model"
 import { SessionUIProvider } from "@/shell/routes/session-ui-provider"
@@ -125,6 +127,11 @@ function ResolvedTargetSessionRoute() {
   const server = useServer()
   const tabs = useTabs()
   const data = useData()
+  const links = usePluginHost().links
+  const attachment = usePluginAttachment()
+
+  // The exact path the agent wrote, inside the workspace or outside it, opens as a file tab that renders it.
+  const openFile = (path: string) => links.open({ href: path, exact: true, session: attachment.current() })
 
   const current = createSessionResolution(
     () => params.id,
@@ -169,7 +176,7 @@ function ResolvedTargetSessionRoute() {
       >
         {(value) => (
           <LocationProvider directory={value()}>
-            <SessionUIProvider directory={value()} server={server.key}>
+            <SessionUIProvider directory={value()} server={server.key} onOpenFile={openFile}>
               <TargetSessionPage />
             </SessionUIProvider>
           </LocationProvider>

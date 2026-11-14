@@ -21,6 +21,8 @@ export function ArtifactToolbar(props: {
   onModeChange?: (mode: "preview" | "source") => void
   meta: string[]
   html: boolean
+  /** Opens the artifact in the system's default browser; absent for kinds a browser does not show. */
+  onOpenInSystemBrowser?: () => void
 }) {
   const ctx = usePlugin()
   const shared = useShared()
@@ -134,6 +136,9 @@ export function ArtifactToolbar(props: {
                       {ctx.t("view.openInBrowser")}
                     </Menu.Item>
                   )}
+                </Show>
+                <Show when={props.onOpenInSystemBrowser}>
+                  {(open) => <Menu.Item onSelect={() => open()()}>{ctx.t("view.openInSystemBrowser")}</Menu.Item>}
                 </Show>
                 <Show when={apps.canOpen()}>
                   <Menu.Item onSelect={() => apps.openPath("finder", path(), true)} disabled={apps.opening()}>
