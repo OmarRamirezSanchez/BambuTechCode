@@ -30,9 +30,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { target: darwin-arm64, arch: arm64, install: --os=darwin --cpu=arm64 }
+          - { target: darwin-arm64, cli: darwin-arm64, arch: arm64, install: --os=darwin --cpu=arm64 }
           # Packed on the Apple Silicon runner, as upstream does for its dev channel; afterPack checks the CPU.
-          - { target: darwin-x64, arch: x64, install: --os=darwin --cpu=* }
+          # The Intel desktop bundles the baseline CLI (packages/desktop/script/utils.ts CLI_BINARIES).
+          - { target: darwin-x64, cli: darwin-x64-baseline, arch: x64, install: --os=darwin --cpu=* }
     runs-on: macos-26
     permissions:
       contents: write # attaches the dmg to the release
@@ -64,7 +65,7 @@ jobs:
         working-directory: packages/cli
         run: bun run build
         env:
-          OPENCODE_TARGET: ${{ matrix.target }}
+          OPENCODE_TARGET: ${{ matrix.cli }}
 
       - name: Build desktop
         working-directory: packages/desktop
