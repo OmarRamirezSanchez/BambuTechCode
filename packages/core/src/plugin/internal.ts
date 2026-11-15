@@ -103,6 +103,7 @@ import { OpencodePlugin } from "./provider/opencode.js"
 import { BambuIAPlugin } from "./provider/bambu-ia.js"
 import { WebSearchPlugins } from "./websearch/index.js"
 import { SkillPlugin } from "./skill.js"
+import { BambuTechIADeveloperPlugin } from "./bambutech-ia-developer.js"
 import { VcsHgPlugin } from "./vcs/hg.js"
 import { ToolInputRepairPlugin } from "./tool-input-repair.js"
 import { OptimizePlugin } from "./optimize.js"
@@ -233,6 +234,8 @@ const pre = [
   CommandPlugin.Plugin,
   GoalPlugin.Plugin,
   SkillPlugin.Plugin,
+  // After ConfigMcpPlugin, so a configured codebase-memory-mcp server wins over the bundled one.
+  BambuTechIADeveloperPlugin.Plugin,
   VcsHgPlugin.Plugin,
   ModelsDevPlugin,
   ...ProviderPlugins,
