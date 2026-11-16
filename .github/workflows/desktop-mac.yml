@@ -6,7 +6,7 @@ run-name: "desktop-mac ${{ inputs.tag }}"
 #
 # The fork has no Apple Developer ID, so the apps are signed ad hoc and not notarized: macOS asks the user to allow
 # the app once in System Settings → Privacy & Security. The governed settings below are the same public values the
-# Windows installer is built with (RAD Dev and BambuIAFrameWork Dev).
+# Windows installer is built with: RAD prod and BambuIAFrameWork's only environment, which accepts RAD prod sessions.
 
 on:
   workflow_dispatch:
@@ -39,9 +39,9 @@ jobs:
       contents: write # attaches the dmg to the release
     env:
       OPENCODE_CHANNEL: latest
-      RAD_WEB_ORIGIN: https://develop.d30ysw67gn3hiq.amplifyapp.com
-      RAD_API_URL: https://api-rad.develop-bambumobile.com/api
-      RAD_USAGE_API: https://api-rad.develop-bambumobile.com/api/projects/usage
+      RAD_WEB_ORIGIN: https://rad.bambu-mobile.com
+      RAD_API_URL: https://44.241.70.4/api
+      RAD_USAGE_API: https://44.241.70.4/api/projects/usage
       BAMBU_IA_ORIGIN: https://ia-dev.rad.bambu-mobile.com
       # RAD's public Firebase web config (project bambumobilerad), as in RAD_Frontend's environments.
       RAD_FIREBASE_CONFIG: '{"apiKey":"AIzaSyBfFogr9okQ6jGl2BuOhBT31Di8DIN1RcM","authDomain":"bambumobilerad.firebaseapp.com","projectId":"bambumobilerad"}'
